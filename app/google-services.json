@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "275470136893",
+    "firebase_url": "https://palomero-40cf2-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "palomero-40cf2",
+    "storage_bucket": "palomero-40cf2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:275470136893:android:56ee51a886a555a5885c54",
+        "android_client_info": {
+          "package_name": "com.example.proyectopalomero"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMWuzKnWnwJBejA6lp6F0Q-Syn7MScgYA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

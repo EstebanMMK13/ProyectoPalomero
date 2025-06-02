@@ -1,0 +1,408 @@
+package com.example.proyectopalomero.ui.theme.screens.Perfil
+
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.navigation.NavController
+import coil3.compose.AsyncImage
+import com.example.proyectopalomero.UsuarioViewModel
+import com.example.proyectopalomero.data.model.PublicacionFire
+import com.example.proyectopalomero.data.model.UsuarioFire
+import com.example.proyectopalomero.data.utils.Routes
+import com.example.proyectopalomero.navigation.safeNavigate
+import com.example.proyectopalomero.ui.theme.screens.Feed.FeedViewModel
+import com.example.proyectopalomero.ui.theme.theme.amarilloSecundario
+import kotlinx.coroutines.launch
+
+@Composable
+fun PerfilScreen(
+    temaOscuro: Boolean,
+    modifier: Modifier,
+    navController: NavController,
+    usuarioViewModel: UsuarioViewModel,
+    perfilViewModel: PerfilViewModel,
+    cerrarSesion: MutableState<Boolean>
+) {
+
+    var usuarioActual = usuarioViewModel.usuario.collectAsState().value
+
+    LaunchedEffect(Unit) {
+        perfilViewModel.observarPublicacionesPorUsuario(usuarioActual?.id ?: "")
+    }
+
+    Column(
+        modifier = modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // MiPerfil: Mostrar información del perfil del usuario
+        MiPerfil(temaOscuro,modifier = Modifier, usuarioActual, navController, perfilViewModel,usuarioViewModel,cerrarSesion)
+
+        // MisPublicaciones: Mostrar las publicaciones del usuario
+        MisPublicaciones(modifier = Modifier, usuarioActual, perfilViewModel)
+    }
+}
+
+//Funcion para mostrar el perfil del usuario
+@Composable
+fun MiPerfil(
+    temaOscuro: Boolean,
+    modifier: Modifier = Modifier,
+    usuario: UsuarioFire?,
+    navController: NavController,
+    perfilViewModel: PerfilViewModel,
+    usuarioViewModel: UsuarioViewModel,
+    cerrarSesion: MutableState<Boolean>
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+    ) {
+        // Cabecera: Imagen y detalles del usuario
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AsyncImage(
+                model = usuario?.fotoPerfil,
+                modifier = Modifier
+                    .weight(1f)
+                    .size(100.dp)
+                    .clip(CircleShape)
+                    .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
+                contentDescription = "Imagen usuario",
+                contentScale = ContentScale.Crop
+            )
+
+
+            Spacer(modifier = Modifier.width(15.dp))
+
+            Column(
+                modifier = modifier.weight(1.5f)
+            ) {
+                Text(
+                    text = usuario?.nombre ?: "Usuario desconocido",
+                    fontSize = 25.sp,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(bottom = 5.dp)
+                )
+                Text(
+                    text = usuario?.nickname ?: "Nickname desconocido",
+                    color = MaterialTheme.colorScheme.secondary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontSize = 18.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.width(15.dp))
+
+            IconButton(
+                modifier = modifier.weight(0.5f),
+                onClick = { usuarioViewModel.cambiarTema() }) {
+                val icon = if (temaOscuro) Icons.Filled.LightMode else Icons.Filled.DarkMode
+                Icon(imageVector = icon, contentDescription = "Cambiar tema")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+
+            Button(
+                //Boton para editar perfil
+                colors = ButtonDefaults.buttonColors(
+                    contentColor = MaterialTheme.colorScheme.onBackground,
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(35.dp),
+                onClick = { navController.safeNavigate(Routes.EDITAR_PERFIL) },
+            ) {
+                Text(
+                    text = "Editar perfil",
+                    fontSize = 15.sp
+                )
+            }
+
+            Button(
+                //Boton para cerrar sesión
+                colors = ButtonDefaults.buttonColors(
+                    contentColor = Color.White,
+                    containerColor = Color.Red
+                ),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(35.dp),
+                onClick = {
+                    perfilViewModel.singOut()
+                    cerrarSesion.value = true
+                    navController.navigate(Routes.LOGIN) {
+                        launchSingleTop = true
+                        popUpTo(0) { inclusive = true }
+                    }
+                    usuarioViewModel.limpiarUsuario()
+                }
+            ) {
+                Text(
+                    text = "Cerrar sesión",
+                    fontSize = 15.sp
+                )
+            }
+        }
+    }
+}
+
+
+@Composable
+fun MisPublicaciones(modifier: Modifier, usuario: UsuarioFire?, perfilViewModel: PerfilViewModel) {
+
+    var misPublicaciones = remember { mutableStateOf<List<PublicacionFire>>(emptyList()) }
+    val isLoading by perfilViewModel.isLoading.collectAsState(initial = true)
+
+    misPublicaciones.value = perfilViewModel.publicaciones.collectAsState().value
+
+    if (isLoading) {
+        CircularProgressIndicator()
+    } else {
+        //Comprobar si hay publicaciones
+        if (misPublicaciones.value.isEmpty()) {
+            Text(
+                text = "No tienes publicaciones aún.",
+                modifier = modifier.padding(16.dp),
+                style = MaterialTheme.typography.bodyLarge
+            )
+        } else {
+            LazyColumn {
+                items(misPublicaciones.value.size) { index ->
+                    val publicacion = misPublicaciones.value[index]
+                    if (usuario != null) {
+                        MostrarPublicacion(publicacion, usuario, perfilViewModel)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MostrarPublicacion(
+    publicacion: PublicacionFire,
+    usuario: UsuarioFire,
+    perfilViewModel: PerfilViewModel,
+) {
+
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 3.dp, vertical = 2.dp)
+            .fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                UsuarioHeader(usuario,perfilViewModel,publicacion)
+            }
+            Spacer(modifier = Modifier.height(3.dp))
+
+            Row(modifier = Modifier.fillMaxWidth()) {
+                ContenidoPublicacion(publicacion)
+            }
+
+            Spacer(modifier = Modifier.height(3.dp))
+
+            Row(modifier = Modifier.fillMaxWidth()) {
+                AccionesPublicacion(publicacion, usuario, perfilViewModel)
+            }
+        }
+    }
+}
+
+
+@Composable
+fun UsuarioHeader(
+    usuarioActual: UsuarioFire,
+    perfilViewModel: PerfilViewModel,
+    publicacion: PublicacionFire
+) {
+    var expandirImagen by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        AsyncImage(
+            model = usuarioActual.fotoPerfil,
+            contentDescription = "Foto de perfil",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(60.dp)
+                .clip(CircleShape)
+                .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                .pointerInput(true) {
+                    detectTapGestures(onLongPress = { expandirImagen = true })
+                }
+        )
+
+        Spacer(modifier = Modifier.width(10.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = usuarioActual.nombre ?: "Nombre desconocido",
+                fontSize = 20.sp,
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                text = usuarioActual.nickname ?: "Nickname desconocido",
+                color = MaterialTheme.colorScheme.secondary
+            )
+        }
+
+            var expanded by remember { mutableStateOf(false) }
+            Box {
+                IconButton(onClick = { expanded = true }) {
+                    Icon(Icons.Filled.MoreVert, contentDescription = "Opciones")
+                }
+
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Eliminar") },
+                        leadingIcon = {
+                            Icon(Icons.Filled.Delete, tint = amarilloSecundario,contentDescription = "Eliminar")
+                        },
+                        onClick = {
+                            scope.launch { perfilViewModel.eliminarPublicacion(publicacion.id!!) }
+                            expanded = false }
+                    )
+                }
+            }
+    }
+
+    if (expandirImagen) {
+        Dialog(onDismissRequest = { expandirImagen = false }) {
+            Box(
+                modifier = Modifier.background(Color.Black.copy(alpha = 0.0f)),
+                contentAlignment = Alignment.Center
+            ) {
+                AsyncImage(
+                    model = usuarioActual.fotoPerfil,
+                    contentDescription = "Imagen ampliada",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(300.dp)
+                        .clip(CircleShape)
+                        .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ContenidoPublicacion(publicacion: PublicacionFire) {
+    Text(
+        text = publicacion.contenido ?: "",
+        fontSize = 15.sp,
+        textAlign = TextAlign.Justify,
+        style = MaterialTheme.typography.bodyLarge,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 10.dp, vertical = 10.dp)
+    )
+}
+
+@Composable
+fun AccionesPublicacion(
+    publicacion: PublicacionFire,
+    usuarioActual: UsuarioFire,
+    perfilViewModel: PerfilViewModel
+) {
+    var meGusta by remember(publicacion.listaMeGustas, usuarioActual.id) {
+        mutableStateOf(perfilViewModel.leGustaAlUsuario(publicacion, usuarioActual.id ?: ""))
+    }
+
+    val animacionMeGusta by animateFloatAsState(if (meGusta) 1.5f else 1.0f)
+    val colorFav = if (meGusta) Color.Red else amarilloSecundario
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Favorite,
+            contentDescription = "Me gusta",
+            tint = colorFav,
+            modifier = Modifier
+                .clickable {
+                    perfilViewModel.alternarMeGusta(publicacion, usuarioActual.id ?: "")
+                    meGusta = !meGusta
+                }
+                .scale(animacionMeGusta)
+                .size(28.dp)
+        )
+        Spacer(modifier = Modifier.width(9.dp))
+        Text(
+            text = "${publicacion.listaMeGustas?.size ?: 0}",
+            fontSize = 16.sp,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}

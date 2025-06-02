@@ -1,12 +1,10 @@
 package com.example.proyectopalomero.ui.theme.screens.Feed
 
-import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Arrangement.Top
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -123,6 +121,7 @@ fun FeedScreen(
     }
 
 }
+
 
 @Composable
 fun MostrarPublicacion(

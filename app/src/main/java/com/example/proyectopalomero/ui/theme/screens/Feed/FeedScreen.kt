@@ -61,6 +61,7 @@ import com.example.proyectopalomero.ui.theme.theme.amarilloSecundario
 import kotlinx.coroutines.launch
 
 
+
 // Pantalla de Feed
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

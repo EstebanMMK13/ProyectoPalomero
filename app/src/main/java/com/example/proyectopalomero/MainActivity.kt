@@ -99,7 +99,7 @@ class MainActivity : ComponentActivity() {
 
                 val mostrarTopBar = currentRoute != null && currentRoute !in pantallasSinTopBar
                 val mostrarBottomBar = currentRoute != null && currentRoute !in pantallasSinBottomBar
-                val mostrarFab = currentRoute != null && currentRoute !in pantallasSinFab
+                val mostrarFab = currentRoute != null && pantallasSinFab.none { route -> currentRoute.startsWith(route) }
                 val fabConfig = getFabConfig(currentRoute, navHostController)
 
                 val usuarioActual by usuarioViewModel.usuario.collectAsState()

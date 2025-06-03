@@ -31,14 +31,10 @@ class ChatViewModel(
     private var datosCargados = false
 
     fun obtenerChats(usuarioId: String) {
-        if (datosCargados) return
-
         viewModelScope.launch {
-            try {
-                val chatsObtenidos = chatsRepository.obtenerChats(usuarioId)
+            chatsRepository.obtenerChats(usuarioId).collect { chatsObtenidos ->
                 _chats.value = chatsObtenidos
 
-                // Obtener los IDs del "otro" usuario por cada chat
                 val userIds = chatsObtenidos.mapNotNull { chat ->
                     when (usuarioId) {
                         chat.idUsuario1 -> chat.idUsuario2
@@ -53,13 +49,10 @@ class ChatViewModel(
 
                 _usuariosChatMap.clear()
                 _usuariosChatMap.putAll(usuarios)
-
-                datosCargados = true
-            } catch (e: Exception) {
-                Log.e("ChatViewModel", "Error al obtener chats: ${e.message}")
             }
         }
     }
+
 
 
     fun limipiarDatos() {

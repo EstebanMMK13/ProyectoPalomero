@@ -35,7 +35,8 @@ val pantallasSinFab = listOf(
     Routes.REGISTER,
     Routes.TIEMPO,
     Routes.EDITAR_PERFIL,
-    Routes.AGREGAR_PUBLICACION
+    Routes.AGREGAR_PUBLICACION,
+    Routes.MENSAJES
 )
 
 data class FabConfig(val icon: ImageVector, val onClick: () -> Unit)

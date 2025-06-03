@@ -22,7 +22,8 @@ object Routes {
     const val PERFIL = "PerfilScreen"
     const val EDITAR_PERFIL = "EditarPerfilScreen"
     const val TIEMPO = "TiempoScreen"
-    const val CHATS = "ListaChatsScreen"
+    const val CHATS = "ChatsScreen"
+    const val MENSAJES = "MensajesScreen"
 }
 
 fun formatearHora(timestamp: Timestamp): String {

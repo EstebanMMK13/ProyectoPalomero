@@ -1,8 +1,5 @@
 package com.example.proyectopalomero.navigation
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -13,26 +10,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.proyectopalomero.ui.theme.screens.Tiempo.WeatherViewModel
+import androidx.navigation.navArgument
 import com.example.proyectopalomero.UsuarioViewModel
 import com.example.proyectopalomero.data.repository.AppContainer
 import com.example.proyectopalomero.data.utils.Routes
 import com.example.proyectopalomero.ui.theme.screens.Chats.ChatViewModel
 import com.example.proyectopalomero.ui.theme.screens.Chats.ChatViewModelFactory
-import com.example.proyectopalomero.ui.theme.screens.Chats.ListaChatsScreen
+import com.example.proyectopalomero.ui.theme.screens.Chats.ChatsScreen
+import com.example.proyectopalomero.ui.theme.screens.Chats.Mensajes.MensajesScreen
 import com.example.proyectopalomero.ui.theme.screens.Feed.AgregarPublicacionScreen
 import com.example.proyectopalomero.ui.theme.screens.Feed.FeedScreen
 import com.example.proyectopalomero.ui.theme.screens.Feed.FeedViewModel
 import com.example.proyectopalomero.ui.theme.screens.Feed.FeedViewModelFactory
 import com.example.proyectopalomero.ui.theme.screens.LoginYRegister.LoginScreen
-import com.example.proyectopalomero.ui.theme.screens.Registro.RegisterScreen
 import com.example.proyectopalomero.ui.theme.screens.Perfil.EditarPerfilScreen
 import com.example.proyectopalomero.ui.theme.screens.Perfil.PerfilScreen
 import com.example.proyectopalomero.ui.theme.screens.Perfil.PerfilViewModel
 import com.example.proyectopalomero.ui.theme.screens.Perfil.PerfilViewModelFactory
+import com.example.proyectopalomero.ui.theme.screens.Registro.RegisterScreen
 import com.example.proyectopalomero.ui.theme.screens.Tiempo.WeatherScreen
+import com.example.proyectopalomero.ui.theme.screens.Tiempo.WeatherViewModel
 import com.example.proyectopalomero.ui.theme.screens.splash.SplashScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -103,9 +103,15 @@ fun NavigationWrapper(
           //  enterTransition = { AnimacionEntrada() },
           //  exitTransition = { AnimacionSalida() }
         ) {
-            ListaChatsScreen(Modifier.padding(innerPadding), navHostController,chatsViewModel,usuarioViewModel)
+            ChatsScreen(Modifier.padding(innerPadding), navHostController,chatsViewModel,usuarioViewModel)
         }
-
+        composable(
+            route = "${Routes.MENSAJES}/{idChat}",
+            arguments = listOf(navArgument("idChat") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val idPublicacion = backStackEntry.arguments?.getString("idChat")
+            MensajesScreen(Modifier.padding(innerPadding), usuarioViewModel, idPublicacion!!)
+        }
 
     }
 

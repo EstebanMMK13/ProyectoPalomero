@@ -1,5 +1,6 @@
 package com.example.proyectopalomero.ui.theme.screens.Chats
 
+import android.util.Log
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -38,17 +39,20 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.proyectopalomero.UsuarioViewModel
+import com.example.proyectopalomero.data.utils.Routes
 import com.example.proyectopalomero.data.utils.formatearHora
+import com.example.proyectopalomero.navigation.safeNavigate
 import com.google.firebase.Timestamp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ListaChatsScreen(
+fun ChatsScreen(
     modifier: Modifier,
     navController: NavController,
     chatsViewModel: ChatViewModel,
     usuarioViewModel: UsuarioViewModel
 ) {
+
     val usuarioActual = usuarioViewModel.usuario.collectAsState().value
     val listaChats  = chatsViewModel.chats.collectAsState().value
     val usuariosMap = chatsViewModel.usuariosChatMap
@@ -99,10 +103,11 @@ fun ListaChatsScreen(
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                         .fillMaxWidth()
                         .clickable {
-                            // Navegar a detalle del chat
+                            navController.safeNavigate(Routes.MENSAJES + "/${chat.id}")
                         },
                     elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Row(
                         modifier = Modifier

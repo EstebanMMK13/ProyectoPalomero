@@ -20,14 +20,16 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import com.example.proyectopalomero.data.Api.NetworkResponse
 import com.example.proyectopalomero.data.model.WeatherModel
+import com.example.proyectopalomero.data.utils.MiNavigationBar
 
 // Pantalla de Tiempo
 @Composable
 fun WeatherScreen(
-    modifier: Modifier,
+    navHostController: NavHostController,
     viewModel: WeatherViewModel
 ) {
 
@@ -37,65 +39,71 @@ fun WeatherScreen(
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    Scaffold(
+        bottomBar = { MiNavigationBar(navHostController) },
 
-        Row(
+    ) { innerPadding ->
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceEvenly
+                .padding(innerPadding),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            OutlinedTextField(
-                maxLines = 1,
-                modifier = Modifier.weight(1f),
-                value = ciudad,
-                onValueChange = { ciudad = it },
-                label = { Text(text = "Busca una ciudad (ingles)") },
-                keyboardOptions = KeyboardOptions.Default.copy(
-                    imeAction = ImeAction.Done
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        keyboardController?.hide()
-                    }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                OutlinedTextField(
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f),
+                    value = ciudad,
+                    onValueChange = { ciudad = it },
+                    label = { Text(text = "Busca una ciudad (ingles)") },
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            keyboardController?.hide()
+                        }
+                    )
                 )
-            )
-            IconButton(onClick = {
-                viewModel.getData(ciudad)
-                keyboardController?.hide()
-            }) {
-                Icon(imageVector = Icons.Filled.Search, contentDescription = "Busca")
+                IconButton(onClick = {
+                    viewModel.getData(ciudad)
+                    keyboardController?.hide()
+                }) {
+                    Icon(imageVector = Icons.Filled.Search, contentDescription = "Busca")
+                }
             }
-        }
-        // Dependiendo del resultado de la petición, muestra el contenido correspondiente
-        when (val result = weatherResult.value) {
-            // Si la petición ha fallado se muestra el error
-            is NetworkResponse.Error -> {
-                Text(
-                    text = result.message
-                )
-            }
-            // Si la petición esta cargando se muestra el indicador de cargando
-            NetworkResponse.Loading -> {
-                CircularProgressIndicator()
-            }
+            // Dependiendo del resultado de la petición, muestra el contenido correspondiente
+            when (val result = weatherResult.value) {
+                // Si la petición ha fallado se muestra el error
+                is NetworkResponse.Error -> {
+                    Text(
+                        text = result.message
+                    )
+                }
+                // Si la petición esta cargando se muestra el indicador de cargando
+                NetworkResponse.Loading -> {
+                    CircularProgressIndicator()
+                }
 
-            // Si la petición ha sido exitosa se muestra el contenido
-            is NetworkResponse.Success -> {
-                DetallesTiempo(datos = result.data)
+                // Si la petición ha sido exitosa se muestra el contenido
+                is NetworkResponse.Success -> {
+                    DetallesTiempo(datos = result.data)
+                }
+
+                is NetworkResponse.Empty -> {}
+
+                null -> {}
             }
-
-            is NetworkResponse.Empty -> {}
-
-            null -> {}
         }
     }
+
 }
 
 // Contenido de la pantalla
@@ -143,7 +151,9 @@ fun DetallesTiempo(datos: WeatherModel) {
             )
             Spacer(modifier = Modifier.height(15.dp))
 
-            Card {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),

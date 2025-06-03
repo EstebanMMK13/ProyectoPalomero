@@ -1,300 +1,176 @@
 package com.example.proyectopalomero.ui.theme.screens.Feed
 
-import android.util.Log
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Card
+import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.outlined.AccountBox
+import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import coil3.compose.AsyncImage
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
+import com.example.proyectopalomero.R
 import com.example.proyectopalomero.UsuarioViewModel
-import com.example.proyectopalomero.data.model.PublicacionFire
 import com.example.proyectopalomero.data.model.UsuarioFire
+import com.example.proyectopalomero.data.utils.MiNavigationBar
+import com.example.proyectopalomero.data.utils.Routes
+import com.example.proyectopalomero.navigation.FabConfig
+import com.example.proyectopalomero.navigation.safeNavigate
 import com.example.proyectopalomero.ui.theme.Components.Publicacion.MostrarPublicacion
-import com.example.proyectopalomero.ui.theme.theme.amarilloSecundario
-import kotlinx.coroutines.launch
+import com.example.proyectopalomero.ui.theme.theme.fuenteRetro
 
 
-
-// Pantalla de Feed
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedScreen(
-    modifier: Modifier,
+    temaOscuro: Boolean,
+    navHostController: NavHostController,
     usuarioViewModel: UsuarioViewModel,
     feedViewModel: FeedViewModel
 ) {
-
-    TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
     val isLoading by feedViewModel.isLoading.collectAsState(initial = true)
     val publicaciones by feedViewModel.publicaciones.collectAsState()
-
     val usuariosMap = feedViewModel.usuariosMap
+
+    val usuarioActual = usuarioViewModel.usuario.collectAsState().value
 
     LaunchedEffect(Unit) {
         val usuario = feedViewModel.obtenerUsuarioActual()
         usuarioViewModel.establecerUsuario(usuario)
         feedViewModel.obtenerPublicaciones()
     }
-    val usuarioActual = usuarioViewModel.usuario.collectAsState().value
 
-    Box(
-        modifier = modifier.fillMaxSize()
-    ){
-        if (isLoading){
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ){
-                CircularProgressIndicator()
-            }
-        }else{
+    Scaffold(
+        topBar = { FeedTopAppBar(scrollBehavior = scrollBehavior, nicknameTop = usuarioActual?.nickname ?: "Desconocido") },
+        bottomBar = { MiNavigationBar(navHostController)},
+        floatingActionButton = { FeedFab(navHostController) },
+
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+
+            if (isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .nestedScroll(scrollBehavior.nestedScrollConnection)
                 ) {
                     items(publicaciones.size) { index ->
                         val publicacion = publicaciones[index]
                         val usuario = usuariosMap[publicacion.usuario]
-                        if (usuario !=null){
-                            MostrarPublicacion(publicacion,usuario,usuarioActual?: UsuarioFire(nickname = "Desconocido"),feedViewModel)
+                        if (usuario != null) {
+                            MostrarPublicacion(
+                                publicacion,
+                                usuario,
+                                usuarioActual ?: UsuarioFire(nickname = "Desconocido"),
+                                feedViewModel
+                            )
                         }
                     }
                 }
+            }
+        }
+    }
+}
 
-            FloatingActionButton(
-                onClick = { feedViewModel.recargarPublicaciones() },
-                containerColor = MaterialTheme.colorScheme.background,
-                shape = CircleShape,
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FeedTopAppBar(
+    scrollBehavior: TopAppBarScrollBehavior,
+    nicknameTop: String
+) {
+    TopAppBar(
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.background,
+            titleContentColor = MaterialTheme.colorScheme.secondary,
+            scrolledContainerColor = MaterialTheme.colorScheme.background
+        ),
+        navigationIcon = {
+            Image(
                 modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .size(50.dp)
-                    .padding(bottom = 12.dp, start = 10.dp)
-            ) {
-                Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh",tint = MaterialTheme.colorScheme.secondary)
-            }
-
-        }
-    }
-
-}
-
-/*
-@Composable
-fun MostrarPublicacion(
-    publicacion: PublicacionFire,
-    usuario: UsuarioFire,
-    feedViewModel: FeedViewModel,
-    usuarioActual: UsuarioFire
-) {
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 3.dp, vertical = 2.dp)
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Row(modifier = Modifier.fillMaxWidth()) {
-                UsuarioHeader(usuario, usuarioActual, feedViewModel,publicacion)
-            }
-            Spacer(modifier = Modifier.height(2.dp)) // menor separación
-            Row(modifier = Modifier.fillMaxWidth()) {
-                ContenidoPublicacion(publicacion)
-            }
-            Spacer(modifier = Modifier.height(2.dp))
-            Row(modifier = Modifier.fillMaxWidth()) {
-                AccionesPublicacion(publicacion, usuarioActual, feedViewModel)
-            }
-        }
-    }
-}
-
-
-@Composable
-fun UsuarioHeader(
-    usuario: UsuarioFire,
-    usuarioActual: UsuarioFire,
-    feedViewModel: FeedViewModel,
-    publicacion: PublicacionFire
-) {
-    var expandirImagen by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        AsyncImage(
-            model = usuario.fotoPerfil,
-            contentDescription = "Foto de perfil",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(60.dp)
-                .clip(CircleShape)
-                .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                .pointerInput(true) {
-                    detectTapGestures(onLongPress = { expandirImagen = true })
-                }
-        )
-
-        Spacer(modifier = Modifier.width(10.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = usuario.nombre ?: "Nombre desconocido",
-                fontSize = 20.sp,
-                style = MaterialTheme.typography.titleMedium
+                    .size(70.dp)
+                    .fillMaxWidth(),
+                painter = painterResource(R.drawable.palomero_logo),
+                contentDescription = "Logo"
             )
+        },
+        title = {
             Text(
-                text = usuario.nickname ?: "Nickname desconocido",
-                color = MaterialTheme.colorScheme.secondary
+                text = nicknameTop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(end = 70.dp),
+                textAlign = TextAlign.Center,
+                fontFamily = fuenteRetro
             )
-        }
-
-        if (usuario == usuarioActual) {
-            var expanded by remember { mutableStateOf(false) }
-            Box {
-                IconButton(onClick = { expanded = true }) {
-                    Icon(Icons.Filled.MoreVert, contentDescription = "Opciones")
-                }
-
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Eliminar") },
-                        leadingIcon = {
-                            Icon(Icons.Filled.Delete, tint = amarilloSecundario,contentDescription = "Eliminar")
-                        },
-                        onClick = {
-                            scope.launch { feedViewModel.eliminarPublicacion(publicacion.id!!) }
-                            expanded = false }
-                    )
-                }
-            }
-        }
-    }
-
-    if (expandirImagen) {
-        Dialog(onDismissRequest = { expandirImagen = false }) {
-            Box(
-                modifier = Modifier.background(Color.Black.copy(alpha = 0.0f)),
-                contentAlignment = Alignment.Center
-            ) {
-                AsyncImage(
-                    model = usuario.fotoPerfil,
-                    contentDescription = "Imagen ampliada",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(300.dp)
-                        .clip(CircleShape)
-                        .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun ContenidoPublicacion(publicacion: PublicacionFire) {
-    Text(
-        text = publicacion.contenido ?: "",
-        fontSize = 15.sp,
-        textAlign = TextAlign.Justify,
-        style = MaterialTheme.typography.bodyLarge,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 80.dp, end = 30.dp, top = 6.dp, bottom = 6.dp) // reduzco top y bottom
+        },
+        scrollBehavior = scrollBehavior
     )
 }
 
 @Composable
-fun AccionesPublicacion(
-    publicacion: PublicacionFire,
-    usuarioActual: UsuarioFire,
-    feedViewModel: FeedViewModel
-) {
-    var meGusta by remember(publicacion.listaMeGustas, usuarioActual.id) {
-        mutableStateOf(feedViewModel.leGustaAlUsuario(publicacion, usuarioActual.id ?: ""))
-    }
-
-    val animacionMeGusta by animateFloatAsState(if (meGusta) 1.5f else 1.0f)
-    val colorFav = if (meGusta) Color.Red else amarilloSecundario
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 80.dp, end = 16.dp, bottom = 12.dp), // Dejo margen a la izquierda
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Filled.Favorite,
-            contentDescription = "Me gusta",
-            tint = colorFav,
-            modifier = Modifier
-                .clickable {
-                    feedViewModel.alternarMeGusta(publicacion, usuarioActual.id ?: "")
-                    meGusta = !meGusta
-                }
-                .scale(animacionMeGusta)
-                .size(28.dp)
-        )
-        Spacer(modifier = Modifier.width(9.dp))
-        Text(
-            text = "${publicacion.listaMeGustas?.size ?: 0}",
-            fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-    }
+fun FeedFab(navHostController: NavHostController) {
+        FloatingActionButton(
+            onClick = {navHostController.safeNavigate(Routes.AGREGAR_PUBLICACION)},
+            containerColor = MaterialTheme.colorScheme.background,
+            shape = CircleShape
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Add,
+                contentDescription = "FAB action",
+                tint = MaterialTheme.colorScheme.secondary
+            )
+        }
 }
-*/

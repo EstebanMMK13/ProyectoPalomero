@@ -1,6 +1,7 @@
 package com.example.proyectopalomero.ui.theme.screens.Chats
 
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,12 +18,22 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -32,26 +43,32 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
+import com.example.proyectopalomero.R
 import com.example.proyectopalomero.UsuarioViewModel
+import com.example.proyectopalomero.data.utils.MiNavigationBar
 import com.example.proyectopalomero.data.utils.Routes
 import com.example.proyectopalomero.data.utils.formatearHora
 import com.example.proyectopalomero.navigation.safeNavigate
+import com.example.proyectopalomero.ui.theme.theme.fuenteRetro
 import com.google.firebase.Timestamp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatsScreen(
-    modifier: Modifier,
-    navController: NavController,
+    navHostController: NavHostController,
     chatsViewModel: ChatViewModel,
     usuarioViewModel: UsuarioViewModel
 ) {
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
 
     val usuarioActual = usuarioViewModel.usuario.collectAsState().value
     val listaChats  = chatsViewModel.chats.collectAsState().value
@@ -73,91 +90,154 @@ fun ChatsScreen(
         }
     }
 
-    if (isLoading.value) {
-        // Muestra un indicador de carga
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator()
-        }
+    Scaffold(
+        topBar = {ChatsTopAppBar(scrollBehavior)},
+        bottomBar = { MiNavigationBar(navHostController) },
+        floatingActionButton = { ChatsFab(navHostController) }
+    )
+    { innerPadding ->
 
-    } else {
-        // Mostrar la lista de chats
-        LazyColumn(
-            modifier = modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            items(listaChats) { chat ->
+        if (isLoading.value) {
+            // Muestra un indicador de carga
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
 
-                val otroUsuarioId = if (chat.idUsuario1 == usuarioActual?.id) {
-                    chat.idUsuario2
-                } else {
-                    chat.idUsuario1
-                }
+        } else {
+            // Mostrar la lista de chats
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(innerPadding),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                items(listaChats) { chat ->
 
-                val usuario = usuariosMap[otroUsuarioId]
+                    val otroUsuarioId = if (chat.idUsuario1 == usuarioActual?.id) {
+                        chat.idUsuario2
+                    } else {
+                        chat.idUsuario1
+                    }
 
-                Card(
-                    modifier = Modifier
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                        .fillMaxWidth()
-                        .clickable {
-                            navController.safeNavigate(Routes.MENSAJES + "/${chat.id}")
-                        },
-                    elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                ) {
-                    Row(
+                    val usuario = usuariosMap[otroUsuarioId]
+
+                    Card(
                         modifier = Modifier
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
                             .fillMaxWidth()
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .clickable {
+                                chatsViewModel.chatSeleccionado = chat
+                                navHostController.safeNavigate(Routes.MENSAJES)
+                            },
+                        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                     ) {
-
-                        AsyncImage(
-                            model = usuario?.fotoPerfil,
-                            contentDescription = "Foto de perfil",
+                        Row(
                             modifier = Modifier
-                                .size(64.dp)
-                                .clip(CircleShape)
-                                .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
 
-                        Spacer(modifier = Modifier.width(12.dp))
+                            AsyncImage(
+                                model = usuario?.fotoPerfil,
+                                contentDescription = "Foto de perfil",
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(CircleShape)
+                                    .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
 
-                        Column(modifier = Modifier.weight(1f)) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = usuario?.nickname ?: "",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp
+                                    )
+                                    Text(
+                                        text = formatearHora(chat.fechaMensaje?: Timestamp.now()),
+                                        fontSize = 12.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+
                                 Text(
-                                    text = usuario?.nickname ?: "",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp
-                                )
-                                Text(
-                                    text = formatearHora(chat.fechaMensaje?: Timestamp.now()),
-                                    fontSize = 12.sp,
+                                    text = chat.ultimoMensaje ?: "",
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    fontSize = 14.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-
-                            Text(
-                                text = chat.ultimoMensaje ?: "",
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
                         }
                     }
                 }
             }
         }
     }
+
+
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChatsTopAppBar(
+    scrollBehavior: TopAppBarScrollBehavior
+) {
+    TopAppBar(
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.background,
+            titleContentColor = MaterialTheme.colorScheme.secondary,
+            scrolledContainerColor = MaterialTheme.colorScheme.background
+        ),
+        navigationIcon = {
+            Image(
+                modifier = Modifier
+                    .size(70.dp)
+                    .fillMaxWidth(),
+                painter = painterResource(R.drawable.palomero_logo),
+                contentDescription = "Logo"
+            )
+        },
+        title = {
+            Text(
+                text = "CHATS",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(end = 70.dp),
+                textAlign = TextAlign.Center,
+                fontFamily = fuenteRetro
+            )
+        },
+        scrollBehavior = scrollBehavior
+    )
+}
+
+@Composable
+fun ChatsFab(navHostController: NavHostController) {
+    FloatingActionButton(
+        onClick = {navHostController.safeNavigate(Routes.NUEVO_MENSAJE) },
+        containerColor = MaterialTheme.colorScheme.background,
+        shape = CircleShape
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Email,
+            contentDescription = "FAB action",
+            tint = MaterialTheme.colorScheme.secondary
+        )
+    }
+}

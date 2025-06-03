@@ -1,6 +1,5 @@
 package com.example.proyectopalomero.ui.theme.screens.Feed
 
-import android.R.attr.id
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -12,19 +11,11 @@ import com.example.proyectopalomero.data.model.UsuarioFire
 import com.example.proyectopalomero.data.repository.PublicacionesRepository
 import com.example.proyectopalomero.data.repository.UsuarioRepository
 import com.example.proyectopalomero.ui.theme.Components.Publicacion.PublicacionActions
-import com.example.proyectopalomero.ui.theme.screens.LoginYRegister.LoginViewModel
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.firestore
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
 
 class FeedViewModel(
     private val publicacionesRepository: PublicacionesRepository,

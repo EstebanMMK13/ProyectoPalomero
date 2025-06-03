@@ -14,6 +14,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -50,7 +51,6 @@ import com.example.proyectopalomero.ui.theme.theme.naranjaPrimario
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
-    modifier: Modifier,
     snackbarHostState: SnackbarHostState,
     navController: NavController
 ) {
@@ -84,188 +84,194 @@ fun RegisterScreen(
     var correo by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
+    Scaffold { innerPadding ->
 
-
-    Column(
-        modifier = modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Image(
+        Column(
             modifier = Modifier
-                .size(imageSize)
-                .padding(top = paddingTopMedium),
-            painter = painterResource(R.drawable.palomero_logo),
-            contentDescription = "Logo"
-        )
-
-        Text(
-            text = "Registrarse",
-            modifier = Modifier.padding(top = paddingTopSmall),
-            fontSize = titleFontSize,
-            color = MaterialTheme.colorScheme.primary,
-            fontFamily = fuenteRetro
-        )
-
-        // Nombre
-        Column {
-            Text(
-                text = "Nombre",
-                color = naranjaPrimario,
-                fontSize = labelFontSize,
-                modifier = Modifier
-                    .padding(top = paddingTopSmall)
-                    .background(MaterialTheme.colorScheme.background)
-            )
-            TextField(
-                value = nombre,
-                onValueChange = { nombre = it },
-                label = { Text(text = "Nombre", color = Color.Black) },
-                modifier = Modifier
-                    .width(textFieldWidth)
-                    .height(textFieldHeight),
-                colors = TextFieldDefaults.colors(
-                    focusedTextColor = Color.Black,
-                    unfocusedTextColor = Color.Black,
-                    focusedContainerColor = Color.LightGray,
-                    unfocusedContainerColor = Color.LightGray
-                ),
-                shape = RectangleShape,
-                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(
-                    onDone = { keyboardController?.hide() }
-                )
-            )
-        }
-
-        // Nickname
-        Column {
-            Text(
-                text = "@nickname",
-                color = naranjaPrimario,
-                fontSize = labelFontSize,
-                modifier = Modifier
-                    .padding(top = paddingTopSmall)
-                    .background(MaterialTheme.colorScheme.background)
-            )
-            TextField(
-                value = nickname,
-                onValueChange = { nickname = it },
-                label = { Text(text = "Nickname", color = Color.Black) },
-                modifier = Modifier
-                    .width(textFieldWidth)
-                    .height(textFieldHeight),
-                colors = TextFieldDefaults.colors(
-                    focusedTextColor = Color.Black,
-                    unfocusedTextColor = Color.Black,
-                    focusedContainerColor = Color.LightGray,
-                    unfocusedContainerColor = Color.LightGray
-                ),
-                shape = RectangleShape,
-                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(
-                    onDone = { keyboardController?.hide() }
-                )
-            )
-        }
-
-        // Correo
-        Column {
-            Text(
-                text = "Correo",
-                color = naranjaPrimario,
-                fontSize = labelFontSize,
-                modifier = Modifier
-                    .padding(top = paddingTopSmall)
-                    .background(MaterialTheme.colorScheme.background)
-            )
-            TextField(
-                value = correo,
-                onValueChange = { correo = it },
-                label = { Text(text = "Correo", color = Color.Black) },
-                modifier = Modifier
-                    .width(textFieldWidth)
-                    .height(textFieldHeight),
-                colors = TextFieldDefaults.colors(
-                    focusedTextColor = Color.Black,
-                    unfocusedTextColor = Color.Black,
-                    focusedContainerColor = Color.LightGray,
-                    unfocusedContainerColor = Color.LightGray
-                ),
-                shape = RectangleShape,
-                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(
-                    onDone = { keyboardController?.hide() }
-                )
-            )
-        }
-
-        // Contraseña
-        Column {
-            Text(
-                text = "Contraseña",
-                color = naranjaPrimario,
-                fontSize = labelFontSize,
-                modifier = Modifier
-                    .padding(top = paddingTopSmall)
-                    .background(MaterialTheme.colorScheme.background)
-            )
-            TextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text(text = "Contraseña", color = Color.Black) },
-                modifier = Modifier
-                    .width(textFieldWidth)
-                    .height(textFieldHeight),
-                colors = TextFieldDefaults.colors(
-                    focusedTextColor = Color.Black,
-                    unfocusedTextColor = Color.Black,
-                    focusedContainerColor = Color.LightGray,
-                    unfocusedContainerColor = Color.LightGray
-                ),
-                shape = RectangleShape,
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(
-                    onDone = { keyboardController?.hide() }
-                )
-            )
-        }
-
-        // Botón Registrar
-        Button(
-            modifier = Modifier
-                .padding(top = paddingTopMedium)
-                .width(buttonWidth),
-            onClick = {
-                val nuevoUsuario = UsuarioFire(
-                    nombre = nombre,
-                    nickname = nickname,
-                    correo = correo
-                )
-                registerViewModel.registrarUsuarioCompleto(nuevoUsuario,password)
-            }
+                .fillMaxSize()
+                .padding(innerPadding),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "Registrar",
-                color = MaterialTheme.colorScheme.onBackground
+            Image(
+                modifier = Modifier
+                    .size(imageSize)
+                    .padding(top = paddingTopMedium),
+                painter = painterResource(R.drawable.palomero_logo),
+                contentDescription = "Logo"
             )
-        }
-        // Botón Cancelar
-        Button(
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-            modifier = Modifier
-                .padding(top = paddingTopSmall, start = screenWidth * 0.3f)
-                .width(buttonWidth),
-            onClick = {
-                navController.safeNavigate(Routes.LOGIN)
+
+            Text(
+                text = "Registrarse",
+                modifier = Modifier.padding(top = paddingTopSmall),
+                fontSize = titleFontSize,
+                color = MaterialTheme.colorScheme.primary,
+                fontFamily = fuenteRetro
+            )
+
+            // Nombre
+            Column {
+                Text(
+                    text = "Nombre",
+                    color = naranjaPrimario,
+                    fontSize = labelFontSize,
+                    modifier = Modifier
+                        .padding(top = paddingTopSmall)
+                        .background(MaterialTheme.colorScheme.background)
+                )
+                TextField(
+                    value = nombre,
+                    onValueChange = { nombre = it },
+                    label = { Text(text = "Nombre", color = Color.Black) },
+                    modifier = Modifier
+                        .width(textFieldWidth)
+                        .height(textFieldHeight),
+                    colors = TextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedContainerColor = Color.LightGray,
+                        unfocusedContainerColor = Color.LightGray
+                    ),
+                    shape = RectangleShape,
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone = { keyboardController?.hide() }
+                    )
+                )
             }
-        ) {
-            Text(
-                text = "Cancelar",
-                color = MaterialTheme.colorScheme.onBackground
-            )
+
+            // Nickname
+            Column {
+                Text(
+                    text = "@nickname",
+                    color = naranjaPrimario,
+                    fontSize = labelFontSize,
+                    modifier = Modifier
+                        .padding(top = paddingTopSmall)
+                        .background(MaterialTheme.colorScheme.background)
+                )
+                TextField(
+                    value = nickname,
+                    onValueChange = { nickname = it },
+                    label = { Text(text = "Nickname", color = Color.Black) },
+                    modifier = Modifier
+                        .width(textFieldWidth)
+                        .height(textFieldHeight),
+                    colors = TextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedContainerColor = Color.LightGray,
+                        unfocusedContainerColor = Color.LightGray
+                    ),
+                    shape = RectangleShape,
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone = { keyboardController?.hide() }
+                    )
+                )
+            }
+
+            // Correo
+            Column {
+                Text(
+                    text = "Correo",
+                    color = naranjaPrimario,
+                    fontSize = labelFontSize,
+                    modifier = Modifier
+                        .padding(top = paddingTopSmall)
+                        .background(MaterialTheme.colorScheme.background)
+                )
+                TextField(
+                    value = correo,
+                    onValueChange = { correo = it },
+                    label = { Text(text = "Correo", color = Color.Black) },
+                    modifier = Modifier
+                        .width(textFieldWidth)
+                        .height(textFieldHeight),
+                    colors = TextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedContainerColor = Color.LightGray,
+                        unfocusedContainerColor = Color.LightGray
+                    ),
+                    shape = RectangleShape,
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone = { keyboardController?.hide() }
+                    )
+                )
+            }
+
+            // Contraseña
+            Column {
+                Text(
+                    text = "Contraseña",
+                    color = naranjaPrimario,
+                    fontSize = labelFontSize,
+                    modifier = Modifier
+                        .padding(top = paddingTopSmall)
+                        .background(MaterialTheme.colorScheme.background)
+                )
+                TextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text(text = "Contraseña", color = Color.Black) },
+                    modifier = Modifier
+                        .width(textFieldWidth)
+                        .height(textFieldHeight),
+                    colors = TextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedContainerColor = Color.LightGray,
+                        unfocusedContainerColor = Color.LightGray
+                    ),
+                    shape = RectangleShape,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone = { keyboardController?.hide() }
+                    )
+                )
+            }
+
+            // Botón Registrar
+            Button(
+                modifier = Modifier
+                    .padding(top = paddingTopMedium)
+                    .width(buttonWidth),
+                onClick = {
+                    val nuevoUsuario = UsuarioFire(
+                        nombre = nombre,
+                        nickname = nickname,
+                        correo = correo
+                    )
+                    registerViewModel.registrarUsuarioCompleto(nuevoUsuario,password)
+                }
+            ) {
+                Text(
+                    text = "Registrar",
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+            // Botón Cancelar
+            Button(
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                modifier = Modifier
+                    .padding(top = paddingTopSmall, start = screenWidth * 0.3f)
+                    .width(buttonWidth),
+                onClick = {
+                    navController.safeNavigate(Routes.LOGIN)
+                }
+            ) {
+                Text(
+                    text = "Cancelar",
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
         }
+
     }
+
+
 
     LaunchedEffect(errorMensaje) {
         errorMensaje?.let { mensaje ->

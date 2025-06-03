@@ -6,12 +6,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.proyectopalomero.data.model.ChatFire
+import com.example.proyectopalomero.data.model.MensajeFire
 import com.example.proyectopalomero.data.model.PublicacionFire
 import com.example.proyectopalomero.data.model.UsuarioFire
 import com.example.proyectopalomero.data.repository.ChatsRepository
 import com.example.proyectopalomero.data.repository.PublicacionesRepository
 import com.example.proyectopalomero.data.repository.UsuarioRepository
 import com.example.proyectopalomero.ui.theme.screens.Feed.FeedViewModel
+import com.google.firebase.Timestamp
 import com.google.firebase.database.ValueEventListener
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +29,15 @@ class ChatViewModel(
 
     private val _usuariosChatMap = mutableStateMapOf<String, UsuarioFire?>()
     val usuariosChatMap: Map<String, UsuarioFire?> get() = _usuariosChatMap
+
+    var chatSeleccionado = ChatFire()
+    private val _mensajes = MutableStateFlow<List<MensajeFire>>(emptyList())
+    val mensajes: StateFlow<List<MensajeFire>> = _mensajes
+
+    private val _usuarioChat = MutableStateFlow<UsuarioFire?>(null)
+    val usuarioChat: StateFlow<UsuarioFire?> get() = _usuarioChat
+
+    private var datosCargados2 = false
 
     private var datosCargados = false
 
@@ -54,6 +65,36 @@ class ChatViewModel(
     }
 
 
+    fun cargarMensajes() {
+        if (datosCargados2) return
+
+        viewModelScope.launch {
+            datosCargados2 = true
+            chatsRepository.obtenerMensajes(chatSeleccionado.id!!).collect { nuevosMensajes ->
+                _mensajes.value = nuevosMensajes
+            }
+        }
+    }
+
+    fun enviarMensaje(idChat: String, mensaje: String,usuarioActual: String) {
+
+        viewModelScope.launch {
+
+            val mensajeFire = MensajeFire(
+                idUsuario = usuarioActual,
+                mensaje = mensaje,
+                fecha = Timestamp.now()
+            )
+            chatsRepository.enviarMensaje(idChat, mensajeFire)
+        }
+    }
+
+    fun cargarUsuarioChat(idUsuario: String) {
+        viewModelScope.launch {
+            val usuario = usuarioRepository.obtenerUsuarioPorId(idUsuario)
+            _usuarioChat.value = usuario
+        }
+    }
 
     fun limipiarDatos() {
         _chats.value = emptyList()

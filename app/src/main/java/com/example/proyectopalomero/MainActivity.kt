@@ -64,6 +64,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.proyectopalomero.ui.theme.screens.Tiempo.WeatherViewModel
 import com.example.proyectopalomero.data.utils.Routes
+import com.example.proyectopalomero.data.utils.UtilsCambiarTema
 import com.example.proyectopalomero.navigation.FabConfig
 import com.example.proyectopalomero.navigation.NavigationWrapper
 import com.example.proyectopalomero.navigation.getFabConfig
@@ -77,7 +78,7 @@ import com.google.firebase.FirebaseApp
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var navHostController: NavHostController
+
     val usuarioViewModel: UsuarioViewModel by viewModels {
         object : ViewModelProvider.AndroidViewModelFactory(application) {}
     }
@@ -90,38 +91,17 @@ class MainActivity : ComponentActivity() {
         setContent {
             val temaOscuro by usuarioViewModel.temaOscuro.collectAsState()
             ProyectoPalomeroTheme(darkTheme = temaOscuro) {
-                val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
-                navHostController = rememberNavController()
+                window.setBackgroundDrawableResource(android.R.color.transparent)
+                UtilsCambiarTema(temaOscuro)
                 val weatherViewModel = ViewModelProvider(this)[WeatherViewModel::class.java]
-
-                val currentBackStackEntry by navHostController.currentBackStackEntryAsState()
-                val currentRoute = currentBackStackEntry?.destination?.route
-
-                val mostrarTopBar = currentRoute != null && currentRoute !in pantallasSinTopBar
-                val mostrarBottomBar = currentRoute != null && currentRoute !in pantallasSinBottomBar
-                val mostrarFab = currentRoute != null && pantallasSinFab.none { route -> currentRoute.startsWith(route) }
-                val fabConfig = getFabConfig(currentRoute, navHostController)
-
-                val usuarioActual by usuarioViewModel.usuario.collectAsState()
-                val nicknameTop = usuarioActual?.nickname ?: "Invitado"
-
                 val snackbarHostState = remember { SnackbarHostState() }
-                Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-                    containerColor = MaterialTheme.colorScheme.background,
-                    snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-                    topBar = { if (mostrarTopBar) MiTopAppBar(scrollBehavior, nicknameTop) },
-                    bottomBar = {if (mostrarBottomBar) MiNavigationBar(navHostController,temaOscuro) },
-                    floatingActionButton = { if(mostrarFab) MiFab(fabConfig) },
-                ) { innerPadding ->
-                    NavigationWrapper(
-                        temaOscuro,
-                        navHostController = navHostController,
-                        innerPadding = innerPadding,
-                        snackbarHostState = snackbarHostState,
-                        weatherViewModel = weatherViewModel,
-                        usuarioViewModel
-                    )
-                }
+
+                NavigationWrapper(
+                    temaOscuro,
+                    snackbarHostState = snackbarHostState,
+                    weatherViewModel = weatherViewModel,
+                    usuarioViewModel
+                )
             }
         }
     }
@@ -143,115 +123,115 @@ fun AnimacionSalida(): ExitTransition {
         )
     )
 }
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun MiTopAppBar(
-    scrollBehavior: TopAppBarScrollBehavior,
-    nicknameTop: String
-) {
-        TopAppBar(
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.background,
-                titleContentColor = MaterialTheme.colorScheme.secondary,
-                scrolledContainerColor = MaterialTheme.colorScheme.background
-            ),
-            navigationIcon = {
-                Image(
-                    modifier = Modifier
-                        .size(70.dp)
-                        .fillMaxWidth(),
-                    painter = painterResource(R.drawable.palomero_logo),
-                    contentDescription = "Logo"
-                )
-            },
-            title = {
-                Text(
-                    text = nicknameTop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(end = 70.dp),
-                    textAlign = TextAlign.Center,
-                    fontFamily = fuenteRetro
-                )
-            },
-            scrollBehavior = scrollBehavior
-        )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun MiNavigationBar(navController: NavController, temaOscuro: Boolean) {
-
-    var selectedItem by remember { mutableIntStateOf(0) }
-    val items = listOf("Feed", "Mensajes", "Tiempo", "Perfil")
-    val selectedIcons = listOf(Icons.Filled.Home, Icons.Filled.Email, Icons.Default.LocationOn, Icons.Filled.AccountBox)
-    val unselectedIcons = listOf(Icons.Outlined.Home, Icons.Outlined.Email, Icons.Default.LocationOn, Icons.Outlined.AccountBox)
-
-    val currentDestination = navController.currentBackStackEntryFlow.collectAsState(navController.currentBackStackEntry).value
-
-    NavigationBar(
-        containerColor = MaterialTheme.colorScheme.background,
-        modifier = Modifier.height(56.dp)
-    ) {
-        items.forEachIndexed { indice, item ->
-            NavigationBarItem(
-                icon = {
-                    Icon(
-                        if (selectedItem == indice) selectedIcons[indice] else unselectedIcons[indice],
-                        contentDescription = item,
-                        tint = if (temaOscuro) Color.White else Color.Black
-                    )
-                },
-                selected = selectedItem == indice,
-                onClick = {
-                    selectedItem = indice
-                    when (indice) {
-                        0 -> navController.safeNavigate(Routes.FEED)
-                        1 -> navController.safeNavigate(Routes.CHATS)
-                        2 -> navController.safeNavigate(Routes.TIEMPO)
-                        3 -> navController.safeNavigate(Routes.PERFIL)
-                    }
-                },
-                colors = NavigationBarItemDefaults.colors(
-                    indicatorColor = MaterialTheme.colorScheme.primary,
-                    unselectedIconColor = if (temaOscuro) Color.LightGray else Color.Gray,
-                    selectedIconColor = if (temaOscuro) Color.White else MaterialTheme.colorScheme.primary
-                )
-            )
-        }
-    }
-
-    currentDestination?.destination?.route?.let { route ->
-        selectedItem = when (route) {
-            Routes.FEED -> 0
-            Routes.CHATS -> 1
-            Routes.TIEMPO -> 2
-            Routes.PERFIL -> 3
-            else -> selectedItem
-        }
-    }
-}
-
-
-
-
-
-@Composable
-fun MiFab(fabConfig: FabConfig?) {
-    if (fabConfig != null) {
-        FloatingActionButton(
-            onClick = fabConfig.onClick,
-            containerColor = MaterialTheme.colorScheme.background,
-            shape = CircleShape
-        ) {
-            Icon(
-                imageVector = fabConfig.icon,
-                contentDescription = "FAB action",
-                tint = MaterialTheme.colorScheme.secondary
-            )
-        }
-
-    }
-}
+//
+//@OptIn(ExperimentalMaterial3Api::class)
+//@Composable
+//fun MiTopAppBar(
+//    scrollBehavior: TopAppBarScrollBehavior,
+//    nicknameTop: String
+//) {
+//        TopAppBar(
+//            colors = TopAppBarDefaults.topAppBarColors(
+//                containerColor = MaterialTheme.colorScheme.background,
+//                titleContentColor = MaterialTheme.colorScheme.secondary,
+//                scrolledContainerColor = MaterialTheme.colorScheme.background
+//            ),
+//            navigationIcon = {
+//                Image(
+//                    modifier = Modifier
+//                        .size(70.dp)
+//                        .fillMaxWidth(),
+//                    painter = painterResource(R.drawable.palomero_logo),
+//                    contentDescription = "Logo"
+//                )
+//            },
+//            title = {
+//                Text(
+//                    text = nicknameTop,
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .padding(end = 70.dp),
+//                    textAlign = TextAlign.Center,
+//                    fontFamily = fuenteRetro
+//                )
+//            },
+//            scrollBehavior = scrollBehavior
+//        )
+//}
+//
+//@OptIn(ExperimentalMaterial3Api::class)
+//@Composable
+//fun MiNavigationBar(navController: NavController, temaOscuro: Boolean) {
+//
+//    var selectedItem by remember { mutableIntStateOf(0) }
+//    val items = listOf("Feed", "Mensajes", "Tiempo", "Perfil")
+//    val selectedIcons = listOf(Icons.Filled.Home, Icons.Filled.Email, Icons.Default.LocationOn, Icons.Filled.AccountBox)
+//    val unselectedIcons = listOf(Icons.Outlined.Home, Icons.Outlined.Email, Icons.Default.LocationOn, Icons.Outlined.AccountBox)
+//
+//    val currentDestination = navController.currentBackStackEntryFlow.collectAsState(navController.currentBackStackEntry).value
+//
+//    NavigationBar(
+//        containerColor = MaterialTheme.colorScheme.background,
+//        modifier = Modifier.height(56.dp)
+//    ) {
+//        items.forEachIndexed { indice, item ->
+//            NavigationBarItem(
+//                icon = {
+//                    Icon(
+//                        if (selectedItem == indice) selectedIcons[indice] else unselectedIcons[indice],
+//                        contentDescription = item,
+//                        tint = if (temaOscuro) Color.White else Color.Black
+//                    )
+//                },
+//                selected = selectedItem == indice,
+//                onClick = {
+//                    selectedItem = indice
+//                    when (indice) {
+//                        0 -> navController.safeNavigate(Routes.FEED)
+//                        1 -> navController.safeNavigate(Routes.CHATS)
+//                        2 -> navController.safeNavigate(Routes.TIEMPO)
+//                        3 -> navController.safeNavigate(Routes.PERFIL)
+//                    }
+//                },
+//                colors = NavigationBarItemDefaults.colors(
+//                    indicatorColor = MaterialTheme.colorScheme.primary,
+//                    unselectedIconColor = if (temaOscuro) Color.LightGray else Color.Gray,
+//                    selectedIconColor = if (temaOscuro) Color.White else MaterialTheme.colorScheme.primary
+//                )
+//            )
+//        }
+//    }
+//
+//    currentDestination?.destination?.route?.let { route ->
+//        selectedItem = when (route) {
+//            Routes.FEED -> 0
+//            Routes.CHATS -> 1
+//            Routes.TIEMPO -> 2
+//            Routes.PERFIL -> 3
+//            else -> selectedItem
+//        }
+//    }
+//}
+//
+//
+//
+//
+//
+//@Composable
+//fun MiFab(fabConfig: FabConfig?) {
+//    if (fabConfig != null) {
+//        FloatingActionButton(
+//            onClick = fabConfig.onClick,
+//            containerColor = MaterialTheme.colorScheme.background,
+//            shape = CircleShape
+//        ) {
+//            Icon(
+//                imageVector = fabConfig.icon,
+//                contentDescription = "FAB action",
+//                tint = MaterialTheme.colorScheme.secondary
+//            )
+//        }
+//
+//    }
+//}
 

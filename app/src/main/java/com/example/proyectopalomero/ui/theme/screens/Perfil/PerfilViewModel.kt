@@ -1,6 +1,5 @@
 package com.example.proyectopalomero.ui.theme.screens.Perfil
 
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -11,13 +10,11 @@ import com.example.proyectopalomero.data.model.UsuarioFire
 import com.example.proyectopalomero.data.repository.PublicacionesRepository
 import com.example.proyectopalomero.data.repository.UsuarioRepository
 import com.example.proyectopalomero.ui.theme.Components.Publicacion.PublicacionActions
-import com.example.proyectopalomero.ui.theme.screens.LoginYRegister.LoginViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class PerfilViewModel(

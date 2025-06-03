@@ -6,6 +6,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.proyectopalomero.data.model.UsuarioFire
+import com.example.proyectopalomero.data.utils.UtilsCambiarTema
+import com.example.proyectopalomero.data.utils.UtilsEsOscuro
 import com.example.proyectopalomero.ui.theme.theme.ThemePreference
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -48,6 +50,7 @@ class UsuarioViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             val nuevoValor = !_temaOscuro.value
             ThemePreference.saveThemeMode(context, nuevoValor)
+            UtilsCambiarTema(nuevoValor)
         }
     }
 }

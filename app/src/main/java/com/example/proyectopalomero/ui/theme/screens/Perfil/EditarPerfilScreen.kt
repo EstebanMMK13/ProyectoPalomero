@@ -58,7 +58,6 @@ import com.example.proyectopalomero.navigation.safeNavigate
 //Pantalla de edición de perfil
 @Composable
 fun EditarPerfilScreen(
-    modifier: Modifier,
     navController: NavController,
     usuarioViewModel: UsuarioViewModel,
     perfilViewModel: PerfilViewModel
@@ -77,7 +76,7 @@ fun EditarPerfilScreen(
     var cambiarImagen by remember { mutableStateOf(false) }
 
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         item {

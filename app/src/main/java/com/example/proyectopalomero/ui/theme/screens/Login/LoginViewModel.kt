@@ -1,11 +1,10 @@
-package com.example.proyectopalomero.ui.theme.screens.LoginYRegister
+package com.example.proyectopalomero.ui.theme.screens.Login
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.proyectopalomero.data.model.UsuarioFire
 import com.example.proyectopalomero.data.repository.UsuarioRepository
 import kotlinx.coroutines.launch
 

@@ -1,12 +1,8 @@
 package com.example.proyectopalomero.ui.theme.screens.Perfil
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,20 +16,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -41,66 +35,74 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import com.example.proyectopalomero.UsuarioViewModel
 import com.example.proyectopalomero.data.model.PublicacionFire
 import com.example.proyectopalomero.data.model.UsuarioFire
+import com.example.proyectopalomero.data.utils.MiNavigationBar
 import com.example.proyectopalomero.data.utils.Routes
 import com.example.proyectopalomero.navigation.safeNavigate
 import com.example.proyectopalomero.ui.theme.Components.Publicacion.MostrarPublicacion
-import com.example.proyectopalomero.ui.theme.screens.Feed.FeedViewModel
-import com.example.proyectopalomero.ui.theme.theme.amarilloSecundario
-import kotlinx.coroutines.launch
+import com.example.proyectopalomero.ui.theme.screens.Feed.FeedFab
+import com.example.proyectopalomero.ui.theme.screens.Feed.FeedTopAppBar
 
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PerfilScreen(
-    temaOscuro: Boolean,
-    modifier: Modifier,
-    navController: NavController,
+    navHostController: NavHostController,
     usuarioViewModel: UsuarioViewModel,
     perfilViewModel: PerfilViewModel,
     cerrarSesion: MutableState<Boolean>
 ) {
 
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     var usuarioActual = usuarioViewModel.usuario.collectAsState().value
 
     LaunchedEffect(Unit) {
         perfilViewModel.observarPublicacionesPorUsuario(usuarioActual?.id ?: "")
     }
 
-    Column(
-        modifier = modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // MiPerfil: Mostrar información del perfil del usuario
-        MiPerfil(temaOscuro,modifier = Modifier, usuarioActual, navController, perfilViewModel,usuarioViewModel,cerrarSesion)
-
-        // MisPublicaciones: Mostrar las publicaciones del usuario
-        MisPublicaciones(modifier = Modifier, usuarioActual, perfilViewModel)
+    Scaffold(
+        topBar = { FeedTopAppBar(scrollBehavior = scrollBehavior, nicknameTop = usuarioActual?.nickname ?: "Desconocido") },
+        bottomBar = { MiNavigationBar(navHostController) },
+        floatingActionButton = { FeedFab(navHostController) },
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            MiPerfil(
+                usuario = usuarioActual,
+                navHostController = navHostController,
+                perfilViewModel = perfilViewModel,
+                usuarioViewModel = usuarioViewModel,
+                cerrarSesion = cerrarSesion
+            )
+            MisPublicaciones(scrollBehavior = scrollBehavior, usuario = usuarioActual,perfilViewModel = perfilViewModel)
+        }
     }
 }
 
 //Funcion para mostrar el perfil del usuario
 @Composable
 fun MiPerfil(
-    temaOscuro: Boolean,
     modifier: Modifier = Modifier,
     usuario: UsuarioFire?,
-    navController: NavController,
+    navHostController: NavHostController,
     perfilViewModel: PerfilViewModel,
     usuarioViewModel: UsuarioViewModel,
     cerrarSesion: MutableState<Boolean>
@@ -150,7 +152,7 @@ fun MiPerfil(
             IconButton(
                 modifier = modifier.weight(0.5f),
                 onClick = { usuarioViewModel.cambiarTema() }) {
-                val icon = if (temaOscuro) Icons.Filled.LightMode else Icons.Filled.DarkMode
+                val icon = if (usuarioViewModel.temaOscuro.collectAsState().value) Icons.Filled.LightMode else Icons.Filled.DarkMode
                 Icon(imageVector = icon, contentDescription = "Cambiar tema")
             }
         }
@@ -170,7 +172,7 @@ fun MiPerfil(
                 modifier = Modifier
                     .weight(1f)
                     .height(35.dp),
-                onClick = { navController.safeNavigate(Routes.EDITAR_PERFIL) },
+                onClick = { navHostController.safeNavigate(Routes.EDITAR_PERFIL) },
             ) {
                 Text(
                     text = "Editar perfil",
@@ -190,7 +192,7 @@ fun MiPerfil(
                 onClick = {
                     perfilViewModel.singOut()
                     cerrarSesion.value = true
-                    navController.navigate(Routes.LOGIN) {
+                    navHostController.navigate(Routes.LOGIN) {
                         launchSingleTop = true
                         popUpTo(0) { inclusive = true }
                     }
@@ -207,8 +209,9 @@ fun MiPerfil(
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MisPublicaciones(modifier: Modifier, usuario: UsuarioFire?, perfilViewModel: PerfilViewModel) {
+fun MisPublicaciones(modifier: Modifier = Modifier,scrollBehavior: TopAppBarScrollBehavior ,usuario: UsuarioFire?, perfilViewModel: PerfilViewModel) {
 
     var misPublicaciones = remember { mutableStateOf<List<PublicacionFire>>(emptyList()) }
     val isLoading by perfilViewModel.isLoading.collectAsState(initial = true)
@@ -226,7 +229,11 @@ fun MisPublicaciones(modifier: Modifier, usuario: UsuarioFire?, perfilViewModel:
                 style = MaterialTheme.typography.bodyLarge
             )
         } else {
-            LazyColumn {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .nestedScroll(scrollBehavior.nestedScrollConnection)
+            ) {
                 items(misPublicaciones.value.size) { index ->
                     val publicacion = misPublicaciones.value[index]
                     if (usuario != null) {

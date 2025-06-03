@@ -11,6 +11,7 @@ import com.example.proyectopalomero.data.model.PublicacionFire
 import com.example.proyectopalomero.data.model.UsuarioFire
 import com.example.proyectopalomero.data.repository.PublicacionesRepository
 import com.example.proyectopalomero.data.repository.UsuarioRepository
+import com.example.proyectopalomero.ui.theme.Components.Publicacion.PublicacionActions
 import com.example.proyectopalomero.ui.theme.screens.LoginYRegister.LoginViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.FirebaseFirestore
@@ -28,7 +29,7 @@ import kotlinx.coroutines.withContext
 class FeedViewModel(
     private val publicacionesRepository: PublicacionesRepository,
     private val usuarioRepository: UsuarioRepository
-) : ViewModel() {
+) : ViewModel() , PublicacionActions{
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -90,11 +91,11 @@ class FeedViewModel(
         return usuarioRepository.obtenerUsuarioActual()
     }
 
-    fun leGustaAlUsuario(publicacion: PublicacionFire, idUsuario: String): Boolean {
+    override fun leGustaAlUsuario(publicacion: PublicacionFire, idUsuario: String): Boolean {
         return publicacion.listaMeGustas?.contains(idUsuario) == true
     }
 
-    fun alternarMeGusta(publicacion: PublicacionFire, idUsuario: String) {
+    override fun alternarMeGusta(publicacion: PublicacionFire, idUsuario: String) {
         val leGusta = publicacion.listaMeGustas?.contains(idUsuario) ?: false
         if (leGusta) {
             publicacion.listaMeGustas?.remove(idUsuario)
@@ -112,7 +113,7 @@ class FeedViewModel(
         }
     }
 
-    suspend fun eliminarPublicacion(idPublicacion: String) {
+    override suspend fun eliminarPublicacion(idPublicacion: String) {
         publicacionesRepository.eliminarPublicacion(idPublicacion)
     }
 
@@ -124,9 +125,12 @@ class FeedViewModel(
     }
 
     fun recargarPublicaciones() {
+        _isLoading.value = true
         limpiarDatos()
         publicacionesRepository.iniciarEscuchaPublicacionesEnTiempoReal()
         obtenerPublicaciones()
+        _isLoading.value = false
+
     }
 
 }

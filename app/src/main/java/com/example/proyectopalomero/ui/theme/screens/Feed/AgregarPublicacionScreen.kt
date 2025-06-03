@@ -97,7 +97,7 @@ fun AgregarPublicacionScreen(modifier: Modifier, navController: NavController,fe
 
                 feedViewModel.agregarPublicacion(publicacion)
                 utilsMostrarToast(context, "Se ha publicado correctamente")
-                navController.safeNavigate(Routes.FEED)
+                navController.popBackStack()
 
             },
             shape = RectangleShape

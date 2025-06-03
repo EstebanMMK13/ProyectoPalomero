@@ -10,6 +10,7 @@ import com.example.proyectopalomero.data.model.PublicacionFire
 import com.example.proyectopalomero.data.model.UsuarioFire
 import com.example.proyectopalomero.data.repository.PublicacionesRepository
 import com.example.proyectopalomero.data.repository.UsuarioRepository
+import com.example.proyectopalomero.ui.theme.Components.Publicacion.PublicacionActions
 import com.example.proyectopalomero.ui.theme.screens.LoginYRegister.LoginViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +23,7 @@ import kotlinx.coroutines.launch
 class PerfilViewModel(
     private val usuarioRepository: UsuarioRepository,
     private val publicacionesRepository: PublicacionesRepository
-) : ViewModel() {
+) : ViewModel(), PublicacionActions {
 
     fun singOut() {
         usuarioRepository.signOut()
@@ -66,11 +67,11 @@ class PerfilViewModel(
         }
     }
 
-    fun leGustaAlUsuario(publicacion: PublicacionFire, idUsuario: String): Boolean {
+    override fun leGustaAlUsuario(publicacion: PublicacionFire, idUsuario: String): Boolean {
         return publicacion.listaMeGustas?.contains(idUsuario) == true
     }
 
-    fun alternarMeGusta(publicacion: PublicacionFire, idUsuario: String) {
+    override fun alternarMeGusta(publicacion: PublicacionFire, idUsuario: String) {
         val leGusta = publicacion.listaMeGustas?.contains(idUsuario) ?: false
         if (leGusta) {
             publicacion.listaMeGustas?.remove(idUsuario)
@@ -81,7 +82,7 @@ class PerfilViewModel(
         }
     }
 
-    suspend fun eliminarPublicacion(idPublicacion: String) {
+    override suspend fun eliminarPublicacion(idPublicacion: String) {
         publicacionesRepository.eliminarPublicacion(idPublicacion)
         // No necesitas tocar _publicaciones, el listener lo actualiza solo
     }

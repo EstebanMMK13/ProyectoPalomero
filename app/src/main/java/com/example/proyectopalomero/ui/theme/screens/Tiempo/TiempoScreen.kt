@@ -21,9 +21,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import com.example.proyectopalomero.BackEnd.Api.NetworkResponse
-import com.example.proyectopalomero.BackEnd.Api.WeatherModel
-import com.example.proyectopalomero.BackEnd.WeatherViewModel
+import com.example.proyectopalomero.data.Api.NetworkResponse
+import com.example.proyectopalomero.data.model.WeatherModel
 
 // Pantalla de Tiempo
 @Composable

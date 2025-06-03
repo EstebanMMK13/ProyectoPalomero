@@ -1,4 +1,4 @@
-package com.example.proyectopalomero.BackEnd.Api
+package com.example.proyectopalomero.data.Api
 
 //Clase para manejar la respuesta de la API
 sealed class NetworkResponse<out T> {

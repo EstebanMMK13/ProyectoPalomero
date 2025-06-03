@@ -15,6 +15,7 @@ import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -61,7 +62,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.proyectopalomero.BackEnd.WeatherViewModel
+import com.example.proyectopalomero.ui.theme.screens.Tiempo.WeatherViewModel
 import com.example.proyectopalomero.data.utils.Routes
 import com.example.proyectopalomero.navigation.FabConfig
 import com.example.proyectopalomero.navigation.NavigationWrapper
@@ -106,6 +107,7 @@ class MainActivity : ComponentActivity() {
 
                 val snackbarHostState = remember { SnackbarHostState() }
                 Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+                    containerColor = MaterialTheme.colorScheme.background,
                     snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
                     topBar = { if (mostrarTopBar) MiTopAppBar(scrollBehavior, nicknameTop) },
                     bottomBar = {if (mostrarBottomBar) MiNavigationBar(navHostController,temaOscuro) },
@@ -189,7 +191,8 @@ fun MiNavigationBar(navController: NavController, temaOscuro: Boolean) {
     val currentDestination = navController.currentBackStackEntryFlow.collectAsState(navController.currentBackStackEntry).value
 
     NavigationBar(
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
+        modifier = Modifier.height(56.dp)
     ) {
         items.forEachIndexed { indice, item ->
             NavigationBarItem(

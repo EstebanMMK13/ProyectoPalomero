@@ -1,14 +1,13 @@
-package com.example.proyectopalomero.BackEnd
+package com.example.proyectopalomero.ui.theme.screens.Tiempo
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.proyectopalomero.BackEnd.Api.Constant
-import com.example.proyectopalomero.BackEnd.Api.NetworkResponse
-import com.example.proyectopalomero.BackEnd.Api.RetroFitInstance
-import com.example.proyectopalomero.BackEnd.Api.WeatherModel
+import com.example.proyectopalomero.data.model.Constant
+import com.example.proyectopalomero.data.Api.NetworkResponse
+import com.example.proyectopalomero.data.Api.RetroFitInstance
+import com.example.proyectopalomero.data.model.WeatherModel
 import kotlinx.coroutines.launch
 
 //Funcion para obtener los datos de la API
@@ -22,7 +21,7 @@ class WeatherViewModel: ViewModel() {
     fun getData(ciudad: String){
         _weatherResult.value = NetworkResponse.Loading
 
-        viewModelScope.launch{
+        viewModelScope.launch {
             try {
                 val response = weatherApi.getWeather(Constant.apiKey,ciudad)
                 //Si la respuesta es exitosa cargamos los datos

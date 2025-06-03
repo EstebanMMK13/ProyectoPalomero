@@ -1,6 +1,5 @@
-package com.example.proyectopalomero.ui.theme.screens.LoginYRegister
+package com.example.proyectopalomero.ui.theme.screens.Registro
 
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -40,14 +39,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.proyectopalomero.BackEnd.ComprobarCorreoValido
-import com.example.proyectopalomero.BackEnd.ComprobarNickName
-import com.example.proyectopalomero.BackEnd.ComprobarUsuarioExiste
 import com.example.proyectopalomero.R
 import com.example.proyectopalomero.data.model.UsuarioFire
 import com.example.proyectopalomero.data.repository.AppContainer
 import com.example.proyectopalomero.data.utils.Routes
-import com.example.proyectopalomero.data.utils.utilsMostrarToast
 import com.example.proyectopalomero.navigation.safeNavigate
 import com.example.proyectopalomero.ui.theme.theme.fuenteRetro
 import com.example.proyectopalomero.ui.theme.theme.naranjaPrimario

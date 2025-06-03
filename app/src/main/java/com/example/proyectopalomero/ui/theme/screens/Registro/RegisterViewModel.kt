@@ -1,4 +1,4 @@
-package com.example.proyectopalomero.ui.theme.screens.LoginYRegister
+package com.example.proyectopalomero.ui.theme.screens.Registro
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

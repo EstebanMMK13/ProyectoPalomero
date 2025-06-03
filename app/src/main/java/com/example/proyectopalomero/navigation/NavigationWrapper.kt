@@ -15,7 +15,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.proyectopalomero.BackEnd.WeatherViewModel
+import com.example.proyectopalomero.ui.theme.screens.Tiempo.WeatherViewModel
 import com.example.proyectopalomero.UsuarioViewModel
 import com.example.proyectopalomero.data.repository.AppContainer
 import com.example.proyectopalomero.data.utils.Routes
@@ -27,7 +27,7 @@ import com.example.proyectopalomero.ui.theme.screens.Feed.FeedScreen
 import com.example.proyectopalomero.ui.theme.screens.Feed.FeedViewModel
 import com.example.proyectopalomero.ui.theme.screens.Feed.FeedViewModelFactory
 import com.example.proyectopalomero.ui.theme.screens.LoginYRegister.LoginScreen
-import com.example.proyectopalomero.ui.theme.screens.LoginYRegister.RegisterScreen
+import com.example.proyectopalomero.ui.theme.screens.Registro.RegisterScreen
 import com.example.proyectopalomero.ui.theme.screens.Perfil.EditarPerfilScreen
 import com.example.proyectopalomero.ui.theme.screens.Perfil.PerfilScreen
 import com.example.proyectopalomero.ui.theme.screens.Perfil.PerfilViewModel
@@ -61,9 +61,7 @@ fun NavigationWrapper(
 
     NavHost(navController = navHostController, startDestination = Routes.SPLASH) {
         composable(Routes.SPLASH) { SplashScreen(navHostController,usuarioViewModel) }
-        composable(route = Routes.LOGIN, enterTransition = {
-            slideInVertically(animationSpec = tween(1500, easing = LinearEasing))
-        }) {
+        composable(route = Routes.LOGIN) {
             LoginScreen(
                 Modifier.padding(innerPadding),
                 snackbarHostState,
@@ -71,9 +69,7 @@ fun NavigationWrapper(
                 usuarioViewModel
             )
         }
-        composable(Routes.REGISTER, enterTransition = {
-            slideInVertically(animationSpec = tween(1500, easing = LinearEasing))
-        }) {
+        composable(Routes.REGISTER) {
             RegisterScreen(Modifier.padding(innerPadding),snackbarHostState,navHostController)
         }
         composable(Routes.FEED,

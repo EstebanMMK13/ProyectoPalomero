@@ -1,4 +1,4 @@
-package com.example.proyectopalomero.BackEnd.Api
+package com.example.proyectopalomero.data.Api
 
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory

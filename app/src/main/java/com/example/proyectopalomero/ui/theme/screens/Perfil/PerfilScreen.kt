@@ -61,6 +61,7 @@ import com.example.proyectopalomero.data.model.PublicacionFire
 import com.example.proyectopalomero.data.model.UsuarioFire
 import com.example.proyectopalomero.data.utils.Routes
 import com.example.proyectopalomero.navigation.safeNavigate
+import com.example.proyectopalomero.ui.theme.Components.Publicacion.MostrarPublicacion
 import com.example.proyectopalomero.ui.theme.screens.Feed.FeedViewModel
 import com.example.proyectopalomero.ui.theme.theme.amarilloSecundario
 import kotlinx.coroutines.launch
@@ -229,7 +230,7 @@ fun MisPublicaciones(modifier: Modifier, usuario: UsuarioFire?, perfilViewModel:
                 items(misPublicaciones.value.size) { index ->
                     val publicacion = misPublicaciones.value[index]
                     if (usuario != null) {
-                        MostrarPublicacion(publicacion, usuario, perfilViewModel)
+                        MostrarPublicacion(publicacion, usuario,usuario ,perfilViewModel)
                     }
                 }
             }
@@ -237,6 +238,7 @@ fun MisPublicaciones(modifier: Modifier, usuario: UsuarioFire?, perfilViewModel:
     }
 }
 
+/*
 @Composable
 fun MostrarPublicacion(
     publicacion: PublicacionFire,
@@ -406,3 +408,4 @@ fun AccionesPublicacion(
         )
     }
 }
+ */

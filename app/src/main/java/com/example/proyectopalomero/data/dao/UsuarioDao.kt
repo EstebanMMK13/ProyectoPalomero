@@ -35,6 +35,14 @@ class UsuarioDao(
         }
     }
 
+    suspend fun obtenerUsuarios(): List<UsuarioFire> {
+        val query = firestore.collection("usuarios").get().await()
+        return query.documents.map { doc ->
+            doc.toObject(UsuarioFire::class.java)?.copy(id = doc.id)
+                ?: UsuarioFire(nickname = "Usuario desconocido")
+        }
+    }
+
     suspend fun obtenerUsuarioActual(): UsuarioFire {
         val id = auth.currentUser?.uid
         val doc = firestore.collection("usuarios").document(id?: "").get().await()
@@ -44,6 +52,11 @@ class UsuarioDao(
     suspend fun obtenerUsuarioPorId(idUsuario: String): UsuarioFire? {
         val doc = firestore.collection("usuarios").document(idUsuario).get().await()
         return doc.toObject(UsuarioFire::class.java)?.copy(id = doc.id)
+    }
+
+    suspend fun obtenerUsuarioPorNickname(nickname: String): UsuarioFire? {
+        val query = firestore.collection("usuarios").whereEqualTo("nickname", nickname).get().await()
+        return query.documents.firstOrNull()?.toObject(UsuarioFire::class.java)?.copy(id = query.documents.first().id)
     }
 
     suspend fun registrarUsuario(usuario: UsuarioDto, password: String): Boolean {

@@ -2,8 +2,6 @@ package com.example.proyectopalomero.ui.theme.screens.Chats
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +15,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,11 +39,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import com.example.proyectopalomero.UsuarioViewModel
@@ -68,29 +62,26 @@ fun MensajesScreen(
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
 
     val usuarioActual = usuarioViewModel.usuario.collectAsState().value
-    val chatSeleccionado = chatsViewModel.chatSeleccionado
+    val chatSeleccionado by chatsViewModel.chatSeleccionado.collectAsState()
     val usuarioChat = chatsViewModel.usuarioChat.collectAsState().value
     val listaMensajes = chatsViewModel.mensajes.collectAsState().value
     var nuevoMensaje by remember { mutableStateOf("") }
 
-    LaunchedEffect(chatSeleccionado.id) {
-        val idUsuarioActual = usuarioActual?.id
-        val idUsuarioOtro = when (idUsuarioActual) {
-            chatSeleccionado.idUsuario1 -> chatSeleccionado.idUsuario2
-            chatSeleccionado.idUsuario2 -> chatSeleccionado.idUsuario1
-            else -> null
-        }
-
-        if (idUsuarioOtro != null) {
-            chatsViewModel.cargarMensajes()
-            chatsViewModel.cargarUsuarioChat(idUsuarioOtro)
+    LaunchedEffect(chatSeleccionado?.id) {
+        if (chatSeleccionado != null) {
+            val idUsuarioActual = usuarioActual?.id
+            val idUsuarioOtro = chatSeleccionado?.usuarios?.firstOrNull { it != idUsuarioActual }
+            if (idUsuarioOtro != null) {
+                chatsViewModel.cargarUsuarioChat(idUsuarioOtro)
+                chatsViewModel.cargarMensajes()
+            }
         }
     }
 
     Scaffold(
         topBar = {
             if (usuarioChat != null) {
-                MensajesTopAppBar(scrollBehavior, usuarioChat,navHostController)
+                MensajesTopAppBar(scrollBehavior, usuarioChat,navHostController,chatsViewModel)
             } else {
                 TopAppBar(title = { Text("Cargando...") })
             }
@@ -171,7 +162,7 @@ fun MensajesScreen(
                 IconButton(
                     onClick = {
                         if (nuevoMensaje.isNotBlank() && usuarioActual != null) {
-                            chatsViewModel.enviarMensaje(chatSeleccionado.id!!, nuevoMensaje.trim(), usuarioActual.id!!)
+                            chatsViewModel.enviarMensaje(chatSeleccionado?.id!!, nuevoMensaje.trim(), usuarioActual.id!!)
                             nuevoMensaje = ""
                         }
                     }
@@ -188,8 +179,9 @@ fun MensajesScreen(
 @Composable
 fun MensajesTopAppBar(
     scrollBehavior: TopAppBarScrollBehavior,
-    usuarioChar : UsuarioFire,
-    navHostController: NavHostController
+    usuarioChar: UsuarioFire,
+    navHostController: NavHostController,
+    chatsViewModel: ChatViewModel
 ) {
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
@@ -199,7 +191,10 @@ fun MensajesTopAppBar(
         ),
         navigationIcon = {
             IconButton(
-                onClick = { navHostController.safeNavigate(Routes.CHATS) }
+                onClick = {
+                    navHostController.safeNavigate(Routes.CHATS)
+                    chatsViewModel.limpiarSeleccion()
+                }
             ) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,

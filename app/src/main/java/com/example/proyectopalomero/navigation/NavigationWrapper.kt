@@ -19,6 +19,7 @@ import com.example.proyectopalomero.ui.theme.screens.Chats.ChatViewModel
 import com.example.proyectopalomero.ui.theme.screens.Chats.ChatViewModelFactory
 import com.example.proyectopalomero.ui.theme.screens.Chats.ChatsScreen
 import com.example.proyectopalomero.ui.theme.screens.Chats.MensajesScreen
+import com.example.proyectopalomero.ui.theme.screens.Chats.NuevoChatScreen
 import com.example.proyectopalomero.ui.theme.screens.Feed.AgregarPublicacionScreen
 import com.example.proyectopalomero.ui.theme.screens.Feed.FeedScreen
 import com.example.proyectopalomero.ui.theme.screens.Feed.FeedViewModel
@@ -112,13 +113,19 @@ fun NavigationWrapper(
         ) {
             MensajesScreen(navHostController,chatsViewModel,usuarioViewModel)
         }
+        composable(Routes.NUEVO_CHAT,
+            //  enterTransition = { AnimacionEntrada() },
+            //  exitTransition = { AnimacionSalida() }
+        ) {
+            NuevoChatScreen(navHostController,usuarioViewModel,chatsViewModel)
+        }
 
     }
 
     if (cerrarSesion.value) {
         usuarioViewModel.limpiarUsuario()
         feedViewModel.limpiarDatos()
-        chatsViewModel.limipiarDatos()
+        chatsViewModel.limpiarDatos()
         perfilViewModel.limpiarDatos()
         weatherViewModel.limpiarDatos()
 

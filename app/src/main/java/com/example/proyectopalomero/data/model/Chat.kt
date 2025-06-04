@@ -5,17 +5,15 @@ import com.google.firebase.database.Exclude
 import kotlin.collections.emptyList
 
 data class ChatFire(
-    val id: String? = null,
-    val idUsuario1: String? = null,
-    val idUsuario2: String? = null,
+    var id: String? = null,
+    val usuarios : List<String>? = emptyList(),
     var ultimoMensaje: String? = null,
     var fechaMensaje: Timestamp? = null,
     var mensajes: List<MensajeFire>? = null
 )
 
 data class ChatDto(
-    val idUsuario1: String = "",
-    val idUsuario2: String = "",
+    val usuarios : List<String>? = emptyList(),
     val ultimoMensaje: String? = "",
     val horaUltimoMensaje: Timestamp? = null,
     val listaMensajes: List<MensajeDto> = emptyList()

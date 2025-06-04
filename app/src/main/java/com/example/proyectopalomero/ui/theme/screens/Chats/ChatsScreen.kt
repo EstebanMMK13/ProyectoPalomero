@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -118,21 +120,22 @@ fun ChatsScreen(
             ) {
                 items(listaChats) { chat ->
 
-                    val otroUsuarioId = if (chat.idUsuario1 == usuarioActual?.id) {
-                        chat.idUsuario2
-                    } else {
-                        chat.idUsuario1
-                    }
+                    // Obtener el ID del otro usuario
+                    val otroUsuarioId = chat.usuarios?.firstOrNull { it != usuarioActual?.id }
 
+                    // Obtener objeto UsuarioFire
                     val usuario = usuariosMap[otroUsuarioId]
 
                     Card(
                         modifier = Modifier
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                             .fillMaxWidth()
-                            .clickable {
-                                chatsViewModel.chatSeleccionado = chat
-                                navHostController.safeNavigate(Routes.MENSAJES)
+                            .pointerInput(true) {
+                                detectTapGestures(
+                                    onLongPress = { chatsViewModel.borrarChat(chat.id!!) },
+                                    onTap = {chatsViewModel.seleccionarChat(chat)
+                                    navHostController.safeNavigate(Routes.MENSAJES)
+                                    })
                             },
                         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
                         shape = RoundedCornerShape(12.dp),
@@ -144,7 +147,6 @@ fun ChatsScreen(
                                 .padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-
                             AsyncImage(
                                 model = usuario?.fotoPerfil,
                                 contentDescription = "Foto de perfil",
@@ -169,7 +171,7 @@ fun ChatsScreen(
                                         fontSize = 18.sp
                                     )
                                     Text(
-                                        text = formatearHora(chat.fechaMensaje?: Timestamp.now()),
+                                        text = formatearHora(chat.fechaMensaje ?: Timestamp.now()),
                                         fontSize = 12.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -187,6 +189,7 @@ fun ChatsScreen(
                     }
                 }
             }
+
         }
     }
 
@@ -230,7 +233,7 @@ fun ChatsTopAppBar(
 @Composable
 fun ChatsFab(navHostController: NavHostController) {
     FloatingActionButton(
-        onClick = {navHostController.safeNavigate(Routes.NUEVO_MENSAJE) },
+        onClick = {navHostController.safeNavigate(Routes.NUEVO_CHAT) },
         containerColor = MaterialTheme.colorScheme.background,
         shape = CircleShape
     ) {

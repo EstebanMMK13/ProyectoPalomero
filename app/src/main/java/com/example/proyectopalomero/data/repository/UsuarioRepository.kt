@@ -45,12 +45,20 @@ class UsuarioRepository(private val usuarioDao: UsuarioDao) {
         return nickname.startsWith("@")
     }
 
+    suspend fun obtenerUsuarios(): List<UsuarioFire> {
+        return usuarioDao.obtenerUsuarios()
+    }
+
     suspend fun obtenerUsuarioActual(): UsuarioFire {
         return usuarioDao.obtenerUsuarioActual()
     }
 
     suspend fun obtenerUsuarioPorId(id: String): UsuarioFire? {
         return usuarioDao.obtenerUsuarioPorId(id)
+    }
+
+    suspend fun obtenerUsuarioPorNickname(nickname: String): UsuarioFire? {
+        return usuarioDao.obtenerUsuarioPorNickname(nickname)
     }
 
     fun comprobarCorreoValido(correo: String): Boolean {

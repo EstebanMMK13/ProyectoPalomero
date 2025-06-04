@@ -51,7 +51,7 @@ object Routes {
     const val TIEMPO = "TiempoScreen"
     const val CHATS = "ChatsScreen"
     const val MENSAJES = "MensajesScreen"
-    const val NUEVO_MENSAJE = "NuevoMensajeScreen"
+    const val NUEVO_CHAT = "NuevoChatScreen"
 }
 
 fun formatearHora(timestamp: Timestamp): String {

@@ -2,6 +2,7 @@ package com.example.proyectopalomero.data.dao
 
 import android.system.Os.close
 import android.util.Log
+import com.example.proyectopalomero.data.model.ChatDto
 import com.example.proyectopalomero.data.model.ChatFire
 import com.example.proyectopalomero.data.model.MensajeDto
 import com.example.proyectopalomero.data.model.MensajeFire
@@ -18,54 +19,76 @@ class ChatsDao(
 ) {
 
     fun obtenerChats(idUsuario: String): Flow<List<ChatFire>> = callbackFlow {
-        val ref1 = firestore.collection("chats")
-            .whereEqualTo("idUsuario1", idUsuario)
+        val ref = firestore.collection("chats")
+            .whereArrayContains("usuarios", idUsuario)
 
-        val ref2 = firestore.collection("chats")
-            .whereEqualTo("idUsuario2", idUsuario)
-
-        val listener1 = ref1.addSnapshotListener { snapshot1, error1 ->
-            if (error1 != null) {
-                close(error1)
+        val listener = ref.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                close(error)
                 return@addSnapshotListener
             }
 
-            val snapshot2 = ref2.get()
-            snapshot2.addOnSuccessListener { result2 ->
-                val documentos = (snapshot1?.documents ?: emptyList()) + result2.documents
+            val chats = snapshot?.documents
+                ?.mapNotNull { doc ->
+                    val chat = doc.toObject(ChatFire::class.java)
+                    chat?.copy(id = doc.id)
+                }
+                ?: emptyList()
 
-                val chats = documentos
-                    .distinctBy { it.id }
-                    .mapNotNull { doc ->
-                        val chat = doc.toObject(ChatFire::class.java)
-                        chat?.copy(id = doc.id)
-                    }
-
-                trySend(chats).isSuccess
-            }.addOnFailureListener {
-                close(it)
-            }
+            trySend(chats).isSuccess
         }
 
-        // Cancelación del flow
         awaitClose {
-            listener1.remove()
+            listener.remove()
         }
     }
 
+    suspend fun buscarChatEntreUsuarios(idUsuario1: String, idUsuario2: String): ChatFire? {
+        val chatsRef = firestore.collection("chats")
+        val usuariosOrdenados = listOf(idUsuario1, idUsuario2).sorted()
 
-    fun actualizarChat(idChat : String, mensaje: String){
-        val chatRef = firestore.collection("chats").document(idChat)
-        chatRef.update("fechaMensaje", Timestamp.now(), "ultimoMensaje",mensaje)
+        val resultado = chatsRef
+            .whereEqualTo("usuarios", usuariosOrdenados)
+            .get()
+            .await()
+
+        return resultado.documents.firstOrNull()?.let { doc ->
+            doc.toObject(ChatFire::class.java)?.copy(id = doc.id)
+        }
     }
 
+    fun actualizarChat(idChat: String, mensaje: String) {
+        val chatRef = firestore.collection("chats").document(idChat)
+        chatRef.update(
+            mapOf(
+                "fechaMensaje" to Timestamp.now(),
+                "ultimoMensaje" to mensaje
+            )
+        )
+    }
+
+    suspend fun crearChat(chat: ChatDto): ChatFire {
+        val chatsCollection = firestore.collection("chats")
+        val nuevoDocumento = chatsCollection.document()  // crea un nuevo ID
+
+        val nuevoChat = ChatFire(
+            id = nuevoDocumento.id,
+            usuarios = chat.usuarios,
+            fechaMensaje = Timestamp.now(),
+            ultimoMensaje = chat.ultimoMensaje
+        )
+        nuevoDocumento.set(nuevoChat).await()
+        return nuevoChat
+    }
+
+    suspend fun borrarChat(idChat: String) = firestore.collection("chats").document(idChat).delete().await()
 
     fun obtenerMensajes(idChat: String): Flow<List<MensajeFire>> = callbackFlow {
         val listener = firestore
             .collection("chats")
             .document(idChat)
             .collection("mensajes")
-            .orderBy("fecha") // Ordena por fecha si tienes un campo timestamp
+            .orderBy("fecha")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     close(error)
@@ -78,15 +101,21 @@ class ChatsDao(
 
                 trySend(mensajes)
             }
+
         awaitClose {
             listener.remove()
         }
     }
 
     fun enviarMensaje(idChat: String, mensaje: MensajeDto) {
-        firestore.collection("chats").document(idChat).collection("mensajes").document().set(mensaje)
+        firestore
+            .collection("chats")
+            .document(idChat)
+            .collection("mensajes")
+            .document()
+            .set(mensaje)
             .addOnSuccessListener {
-                Log.d("ChatDao", "Mensaje enviado con éxito")
+                Log.d("ChatDao", "Mensaje enviado con éxito")
             }
             .addOnFailureListener {
                 Log.e("ChatDao", "Error al enviar el mensaje", it)

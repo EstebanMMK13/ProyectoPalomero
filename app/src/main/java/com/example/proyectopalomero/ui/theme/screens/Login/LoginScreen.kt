@@ -1,5 +1,6 @@
 package com.example.proyectopalomero.ui.theme.screens.Login
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -19,6 +20,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -72,8 +74,9 @@ fun LoginScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
     LocalContext.current
 
-    Scaffold { innerPadding ->
-
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+    ) { innerPadding ->
         BoxWithConstraints(modifier = Modifier
             .fillMaxSize()
             .padding(innerPadding)
@@ -197,22 +200,22 @@ fun LoginScreen(
                     }
                 }
             }
-        }
-    }
-
-
-
-    // Navegar o mostrar errores
-    LaunchedEffect(loginExitoso, mensajeError) {
-        if (loginExitoso == true) {
-            navController.navigate(Routes.FEED) {
-                popUpTo(0) { inclusive = true }
+            // Navegar o mostrar errores
+            LaunchedEffect(loginExitoso, mensajeError) {
+                if (loginExitoso == true) {
+                    navController.navigate(Routes.FEED) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                    loginViewModel.limpiarEstado()
+                }
+                mensajeError?.let {
+                    Log.d("LoginScreen", "Mensaje de error: $it")
+                    snackbarHostState.showSnackbar(it)
+                    loginViewModel.limpiarEstado()
+                }
             }
-            loginViewModel.limpiarEstado()
-        }
-        mensajeError?.let {
-            snackbarHostState.showSnackbar(it)
-            loginViewModel.limpiarEstado()
+
         }
     }
+
 }

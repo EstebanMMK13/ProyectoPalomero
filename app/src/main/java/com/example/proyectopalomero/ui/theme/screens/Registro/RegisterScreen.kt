@@ -44,6 +44,7 @@ import androidx.navigation.NavController
 import com.example.proyectopalomero.R
 import com.example.proyectopalomero.data.model.UsuarioFire
 import com.example.proyectopalomero.data.repository.AppContainer
+import com.example.proyectopalomero.data.utils.EstadoUI
 import com.example.proyectopalomero.data.utils.Routes
 import com.example.proyectopalomero.navigation.safeNavigate
 import com.example.proyectopalomero.ui.theme.theme.fuenteRetro
@@ -58,9 +59,7 @@ fun RegisterScreen(
     var registerViewModel: RegisterViewModel = viewModel(
         factory = RegisterViewModelFactory(AppContainer.usuarioRepository)
     )
-
-    val registroExito by registerViewModel.registroExito.observeAsState()
-    val errorMensaje by registerViewModel.errorMensaje.observeAsState()
+    val estadoUI by registerViewModel.estadoUI.observeAsState(initial = EstadoUI.Vacio)
 
     val keyboardController = LocalSoftwareKeyboardController.current
     LocalContext.current
@@ -272,18 +271,21 @@ fun RegisterScreen(
             }
         }
 
-        LaunchedEffect(errorMensaje) {
-            errorMensaje?.let { mensaje ->
-                snackbarHostState.showSnackbar(errorMensaje!!)
-                registerViewModel.limpiarEstado()
-            }
-        }
-
-        LaunchedEffect(registroExito) {
-            if (registroExito == true) {
-                snackbarHostState.showSnackbar("Registro exitoso")
-                registerViewModel.limpiarEstado()
-                navController.safeNavigate(Routes.LOGIN)
+        LaunchedEffect(estadoUI) {
+            when (val estado = estadoUI) {
+                is EstadoUI.Exito -> {
+                    snackbarHostState.showSnackbar("Registro exitoso")
+                    registerViewModel.limpiarEstado()
+                    navController.safeNavigate(Routes.LOGIN)
+                }
+                is EstadoUI.Error -> {
+                    snackbarHostState.showSnackbar(estado.mensaje)
+                    registerViewModel.limpiarEstado()
+                }
+                is EstadoUI.Cargando -> {
+                    snackbarHostState.showSnackbar("Cargando...")
+                }
+               is EstadoUI.Vacio-> {}
             }
         }
 

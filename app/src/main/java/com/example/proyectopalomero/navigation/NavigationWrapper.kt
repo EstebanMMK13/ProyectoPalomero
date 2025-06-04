@@ -78,46 +78,46 @@ fun NavigationWrapper(
            // enterTransition = { AnimacionEntrada() },
           //  exitTransition = { AnimacionSalida() }
         ) {
-            FeedScreen(temaOscuro,navHostController,usuarioViewModel ,feedViewModel)
+            FeedScreen(snackbarHostState,navHostController,usuarioViewModel ,feedViewModel)
         }
         composable(Routes.PERFIL,
           //  enterTransition = { AnimacionEntrada() },
           //  exitTransition = { AnimacionSalida() }
         ) {
-            PerfilScreen(navHostController,usuarioViewModel,perfilViewModel,cerrarSesion)
+            PerfilScreen(snackbarHostState,navHostController,usuarioViewModel,perfilViewModel,cerrarSesion)
         }
         composable(Routes.AGREGAR_PUBLICACION,
           //  enterTransition = { AnimacionEntrada() },
           //  exitTransition = { AnimacionSalida() }
         ) {
-            AgregarPublicacionScreen(navHostController, feedViewModel,usuarioViewModel)
+            AgregarPublicacionScreen(snackbarHostState,navHostController, feedViewModel,usuarioViewModel)
         }
         composable(Routes.EDITAR_PERFIL) {
-            EditarPerfilScreen(navHostController,usuarioViewModel,perfilViewModel)
+            EditarPerfilScreen(snackbarHostState,navHostController,usuarioViewModel,perfilViewModel)
         }
         composable(Routes.TIEMPO,
            // enterTransition = { AnimacionEntrada() },
            // exitTransition = { AnimacionSalida() }
         ) {
-            WeatherScreen(navHostController,weatherViewModel)
+            WeatherScreen(snackbarHostState,navHostController,weatherViewModel)
         }
         composable(Routes.CHATS,
           //  enterTransition = { AnimacionEntrada() },
           //  exitTransition = { AnimacionSalida() }
         ) {
-            ChatsScreen(navHostController,chatsViewModel,usuarioViewModel)
+            ChatsScreen(snackbarHostState,navHostController,chatsViewModel,usuarioViewModel)
         }
         composable(Routes.MENSAJES,
             //  enterTransition = { AnimacionEntrada() },
             //  exitTransition = { AnimacionSalida() }
         ) {
-            MensajesScreen(navHostController,chatsViewModel,usuarioViewModel)
+            MensajesScreen(snackbarHostState,navHostController,chatsViewModel,usuarioViewModel)
         }
         composable(Routes.NUEVO_CHAT,
             //  enterTransition = { AnimacionEntrada() },
             //  exitTransition = { AnimacionSalida() }
         ) {
-            NuevoChatScreen(navHostController,usuarioViewModel,chatsViewModel)
+            NuevoChatScreen(snackbarHostState,navHostController,usuarioViewModel,chatsViewModel)
         }
 
     }

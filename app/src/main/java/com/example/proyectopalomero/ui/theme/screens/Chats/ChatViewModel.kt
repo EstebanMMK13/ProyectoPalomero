@@ -15,6 +15,7 @@ import com.example.proyectopalomero.data.model.UsuarioFire
 import com.example.proyectopalomero.data.repository.ChatsRepository
 import com.example.proyectopalomero.data.repository.PublicacionesRepository
 import com.example.proyectopalomero.data.repository.UsuarioRepository
+import com.example.proyectopalomero.data.utils.Resultado
 import com.example.proyectopalomero.ui.theme.screens.Feed.FeedViewModel
 import com.google.firebase.Timestamp
 import com.google.firebase.database.ValueEventListener
@@ -28,6 +29,12 @@ class ChatViewModel(
     private val chatsRepository: ChatsRepository,
     private val usuarioRepository: UsuarioRepository
 ) : ViewModel() {
+
+    private val _exito = MutableLiveData<Boolean>()
+    val exito: LiveData<Boolean> = _exito
+
+    private val _mensajeError = MutableLiveData<String?>()
+    val mensajeError: LiveData<String?> = _mensajeError
 
     // Chats y usuarios en chats
     private val _chats = MutableStateFlow<List<ChatFire>>(emptyList())
@@ -65,25 +72,38 @@ class ChatViewModel(
     fun obtenerChats(usuarioId: String) {
         viewModelScope.launch {
             chatsRepository.obtenerChats(usuarioId).collect { chatsObtenidos ->
-
                 val chatsOrdenados = chatsObtenidos.sortedByDescending { it.fechaMensaje }
                 _chats.value = chatsOrdenados
+
                 val userIds = chatsOrdenados
                     .mapNotNull { chat -> chat.usuarios?.firstOrNull { it != usuarioId } }
                     .distinct()
-                val usuarios = userIds.associateWith { id -> usuarioRepository.obtenerUsuarioPorId(id) }
+
+                val usuarios = mutableMapOf<String, UsuarioFire?>()
+
+                for (id in userIds) {
+                    when (val resultado = usuarioRepository.obtenerUsuarioPorId(id)) {
+                        is Resultado.Exito -> {
+                            _exito.postValue(true)
+                            _mensajeError.postValue(null)
+                            usuarios[id] = resultado.datos
+                        }
+                        is Resultado.Error -> {
+                            _exito.postValue(false)
+                            _mensajeError.postValue(resultado.mensaje)
+                            usuarios[id] = null
+                        }
+                    }
+                }
                 _usuariosChatMap.clear()
                 _usuariosChatMap.putAll(usuarios)
             }
         }
     }
 
-
     fun cargarMensajes() {
         val chatId = _chatSeleccionado.value?.id ?: return
-
         jobMensajes?.cancel()  // Cancelar cualquier carga previa de mensajes
-
         jobMensajes = viewModelScope.launch {
             chatsRepository.obtenerMensajes(chatId).collect { nuevosMensajes ->
                 _mensajes.value = nuevosMensajes
@@ -110,23 +130,51 @@ class ChatViewModel(
 
     fun cargarUsuarioChat(idUsuario: String) {
         viewModelScope.launch {
-            val usuario = usuarioRepository.obtenerUsuarioPorId(idUsuario)
-            _usuarioChat.value = usuario
+           when (val resultado = usuarioRepository.obtenerUsuarioPorId(idUsuario)){
+               is Resultado.Exito -> {
+                   _exito.postValue(true)
+                   _mensajeError.postValue(null)
+                   _usuarioChat.value = resultado.datos
+               }
+               is Resultado.Error -> {
+                   _exito.postValue(false)
+                   _mensajeError.postValue(resultado.mensaje)
+               }
+           }
+
         }
     }
 
     fun cargarUsuarios(idUsuario : String) {
         viewModelScope.launch {
-            val usuarios = usuarioRepository.obtenerUsuarios()
-            _listaUsuarios.value = usuarios.filter { it.id != idUsuario }
+           when( val resultado = usuarioRepository.obtenerUsuarios()){
+               is Resultado.Exito -> {
+                   _exito.postValue(true)
+                   _mensajeError.postValue(null)
+                   _listaUsuarios.value = resultado.datos.filter { it.id != idUsuario }
+               }
+               is Resultado.Error -> {
+                   _exito.postValue(false)
+                   _mensajeError.postValue(resultado.mensaje)
+               }
+           }
         }
     }
 
     fun buscarUsuario(nickname: String) {
         viewModelScope.launch {
-            val usuario = usuarioRepository.obtenerUsuarioPorNickname(nickname)
-            _usuarioNuevoChat.value = usuario
-            _listaUsuarios.value = if (usuario != null) listOf(usuario) else emptyList()
+            when (val resultado = usuarioRepository.obtenerUsuarioPorNickname(nickname)){
+                is Resultado.Exito -> {
+                    _exito.postValue(true)
+                    _mensajeError.postValue(null)
+                    _usuarioNuevoChat.value = resultado.datos
+                    _listaUsuarios.value = if (resultado.datos != null) listOf(resultado.datos) else emptyList()
+                }
+                is Resultado.Error -> {
+                    _exito.postValue(false)
+                    _mensajeError.postValue(resultado.mensaje)
+                }
+            }
         }
     }
 

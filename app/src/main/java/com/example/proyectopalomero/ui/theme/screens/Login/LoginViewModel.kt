@@ -6,44 +6,34 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.proyectopalomero.data.repository.UsuarioRepository
+import com.example.proyectopalomero.data.utils.EstadoUI
+import com.example.proyectopalomero.data.utils.Resultado
 import kotlinx.coroutines.launch
 
 class LoginViewModel(private val usuarioRepository: UsuarioRepository) : ViewModel() {
 
-    private val _loginExitoso = MutableLiveData<Boolean>()
-    val loginExitoso: LiveData<Boolean> = _loginExitoso
-
-    private val _mensajeError = MutableLiveData<String?>()
-    val mensajeError: LiveData<String?> = _mensajeError
-
-    private val _isLoading = MutableLiveData(false)
-    val isLoading: LiveData<Boolean> = _isLoading
+    private val _estadoUI = MutableLiveData<EstadoUI<Boolean>>(EstadoUI.Vacio)
+    val estadoUI: LiveData<EstadoUI<Boolean>> = _estadoUI
 
     fun login(email: String, password: String) {
-        _isLoading.value = true
+        _estadoUI.value = EstadoUI.Cargando
         viewModelScope.launch {
-            try {
-                val resultado = usuarioRepository.login(email, password)
-                if (resultado) {
-                    _loginExitoso.postValue(true)
-                    _mensajeError.postValue(null)
-                } else {
-                    _loginExitoso.postValue(false)
-                    _mensajeError.postValue("Usuario o contraseña incorrectos")
+            when (val resultado = usuarioRepository.login(email, password)) {
+                is Resultado.Exito -> {
+                    _estadoUI.postValue(EstadoUI.Exito(true))
                 }
-            } catch (e: Exception) {
-                _loginExitoso.postValue(false)
-                _mensajeError.postValue(e.message ?: "Error desconocido")
+                is Resultado.Error -> {
+                    _estadoUI.postValue(EstadoUI.Error(resultado.mensaje))
+                }
             }
-            _isLoading.value = false
         }
     }
 
     fun limpiarEstado() {
-        _loginExitoso.value = false
-        _mensajeError.value = null
+        _estadoUI.value = EstadoUI.Vacio
     }
 }
+
 
 class LoginViewModelFactory(
     private val usuarioRepository: UsuarioRepository

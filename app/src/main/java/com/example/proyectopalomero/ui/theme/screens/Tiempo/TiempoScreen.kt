@@ -29,6 +29,7 @@ import com.example.proyectopalomero.data.utils.MiNavigationBar
 // Pantalla de Tiempo
 @Composable
 fun WeatherScreen(
+    snackbarHostState: SnackbarHostState,
     navHostController: NavHostController,
     viewModel: WeatherViewModel
 ) {

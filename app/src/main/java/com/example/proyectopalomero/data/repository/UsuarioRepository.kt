@@ -4,6 +4,7 @@ import android.util.Patterns
 import com.example.proyectopalomero.data.dao.UsuarioDao
 import com.example.proyectopalomero.data.model.UsuarioDto
 import com.example.proyectopalomero.data.model.UsuarioFire
+import com.example.proyectopalomero.data.utils.Resultado
 
 
 class UsuarioRepository(private val usuarioDao: UsuarioDao) {
@@ -29,11 +30,11 @@ class UsuarioRepository(private val usuarioDao: UsuarioDao) {
         return usuarioDao.getCurrentUser() != null
     }
 
-    suspend fun comprobarUsuarioExiste(): Boolean {
+    suspend fun comprobarUsuarioExiste(): Resultado<Boolean> {
         return usuarioDao.comprobarUsuarioExiste()
     }
 
-    suspend fun login(email: String, password: String): Boolean {
+    suspend fun login(email: String, password: String): Resultado<Boolean> {
         return usuarioDao.login(email, password)
     }
 
@@ -45,19 +46,19 @@ class UsuarioRepository(private val usuarioDao: UsuarioDao) {
         return nickname.startsWith("@")
     }
 
-    suspend fun obtenerUsuarios(): List<UsuarioFire> {
+    suspend fun obtenerUsuarios(): Resultado<List<UsuarioFire>> {
         return usuarioDao.obtenerUsuarios()
     }
 
-    suspend fun obtenerUsuarioActual(): UsuarioFire {
+    suspend fun obtenerUsuarioActual(): Resultado<UsuarioFire> {
         return usuarioDao.obtenerUsuarioActual()
     }
 
-    suspend fun obtenerUsuarioPorId(id: String): UsuarioFire? {
+    suspend fun obtenerUsuarioPorId(id: String): Resultado<UsuarioFire?> {
         return usuarioDao.obtenerUsuarioPorId(id)
     }
 
-    suspend fun obtenerUsuarioPorNickname(nickname: String): UsuarioFire? {
+    suspend fun obtenerUsuarioPorNickname(nickname: String): Resultado<UsuarioFire?> {
         return usuarioDao.obtenerUsuarioPorNickname(nickname)
     }
 
@@ -65,11 +66,11 @@ class UsuarioRepository(private val usuarioDao: UsuarioDao) {
         return Patterns.EMAIL_ADDRESS.matcher(correo).matches()
     }
 
-    suspend fun verificarNicknameExistente(nickname: String): Boolean {
+    suspend fun verificarNicknameExistente(nickname: String): Resultado<Boolean> {
         return usuarioDao.verificarNicknameExistente(nickname)
     }
 
-    suspend fun registrarUsuario(usuario: UsuarioFire, password: String): Boolean {
+    suspend fun registrarUsuario(usuario: UsuarioFire, password: String): Resultado<Boolean> {
         usuario.fotoPerfil = listaAvatares.random()
         var usuarioDto = UsuarioDto(
             nombre = usuario.nombre,

@@ -63,16 +63,12 @@ fun LoginScreen(
     val loginViewModel: LoginViewModel = viewModel(
         factory = LoginViewModelFactory(AppContainer.usuarioRepository)
     )
-
-    val loginExitoso by loginViewModel.loginExitoso.observeAsState()
-    val mensajeError by loginViewModel.mensajeError.observeAsState()
-    val isLoading by loginViewModel.isLoading.observeAsState(false)
+    val estadoUI by loginViewModel.estadoUI.observeAsState()
 
     var email by remember { mutableStateOf("estebanmm15@palomero.com") }
     var password by remember { mutableStateOf("123456") }
 
     val keyboardController = LocalSoftwareKeyboardController.current
-    LocalContext.current
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -163,58 +159,62 @@ fun LoginScreen(
                     })
                 )
 
-                if (isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.padding(top = spacingSmall))
-                }else{
-                    Button(
-                        onClick = { loginViewModel.login(email, password) },
-                        modifier = Modifier
-                            .padding(top = spacingMedium)
-                            .width(buttonWidth)
-                    ) {
-                        Text(text = "Login", color = MaterialTheme.colorScheme.onBackground)
+                when (estadoUI) {
+                    is EstadoUI.Cargando -> {
+                        CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
                     }
-
-                    Row(
-                        modifier = Modifier
-                            .padding(top = spacingMedium)
-                            .fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "¿No tienes cuenta?",
-                            color = naranjaPrimario,
-                            fontSize = labelFontSize
-                        )
+                    else -> {
                         Button(
-                            onClick = {
-                                navController.safeNavigate(Routes.REGISTER)
-                            },
-                            modifier = Modifier
-                                .padding(start = 8.dp)
-                                .width(buttonWidth)
+                            onClick = { loginViewModel.login(email, password) },
+                            modifier = Modifier.padding(top = 24.dp)
                         ) {
-                            Text("Regístrate", color = MaterialTheme.colorScheme.onBackground)
+                            Text("Login")
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .padding(top = spacingMedium)
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "¿No tienes cuenta?",
+                                color = naranjaPrimario,
+                                fontSize = labelFontSize
+                            )
+                            Button(
+                                onClick = {
+                                    navController.safeNavigate(Routes.REGISTER)
+                                },
+                                modifier = Modifier
+                                    .padding(start = 8.dp)
+                                    .width(buttonWidth)
+                            ) {
+                                Text("Regístrate", color = MaterialTheme.colorScheme.onBackground)
+                            }
                         }
                     }
                 }
+
             }
             // Navegar o mostrar errores
-            LaunchedEffect(loginExitoso, mensajeError) {
-                if (loginExitoso == true) {
-                    navController.navigate(Routes.FEED) {
-                        popUpTo(0) { inclusive = true }
+            // Efecto para navegar o mostrar error en snackbar
+            LaunchedEffect(estadoUI) {
+                when (estadoUI) {
+                    is EstadoUI.Exito -> {
+                        navController.navigate(Routes.FEED) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                        loginViewModel.limpiarEstado()
                     }
-                    loginViewModel.limpiarEstado()
-                }
-                mensajeError?.let {
-                    Log.d("LoginScreen", "Mensaje de error: $it")
-                    snackbarHostState.showSnackbar(it)
-                    loginViewModel.limpiarEstado()
+                    is EstadoUI.Error -> {
+                        snackbarHostState.showSnackbar((estadoUI as EstadoUI.Error).mensaje)
+                        loginViewModel.limpiarEstado()
+                    }
+                    else -> {}
                 }
             }
-
         }
     }
 

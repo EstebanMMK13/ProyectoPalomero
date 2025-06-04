@@ -73,7 +73,7 @@ fun SplashScreen(
     LaunchedEffect(Unit) {
         delay(2000)
         if (splashViewModel.isUserLoggedIn() && splashViewModel.comprobarUsuarioExiste()) {
-            val usuario = splashViewModel.obtenerUsuarioActual() ?: UsuarioFire(nickname = "Invitado")
+            val usuario = splashViewModel.obtenerUsuarioActual()
             usuarioViewModel.establecerUsuario(usuario)
             navHostController.navigate(Routes.FEED) {
                 launchSingleTop = true

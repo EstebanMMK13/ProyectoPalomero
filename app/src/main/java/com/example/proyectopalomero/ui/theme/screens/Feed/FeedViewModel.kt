@@ -10,33 +10,27 @@ import com.example.proyectopalomero.data.model.PublicacionFire
 import com.example.proyectopalomero.data.model.UsuarioFire
 import com.example.proyectopalomero.data.repository.PublicacionesRepository
 import com.example.proyectopalomero.data.repository.UsuarioRepository
+import com.example.proyectopalomero.data.utils.EstadoUI
+import com.example.proyectopalomero.data.utils.Resultado
 import com.example.proyectopalomero.ui.theme.Components.Publicacion.PublicacionActions
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
-
 class FeedViewModel(
     private val publicacionesRepository: PublicacionesRepository,
     private val usuarioRepository: UsuarioRepository
-) : ViewModel() , PublicacionActions{
+) : ViewModel(), PublicacionActions {
 
-    private val _isLoading = MutableStateFlow(true)
-    val isLoading: StateFlow<Boolean> = _isLoading
-
-    private val _success = MutableLiveData<Boolean>()
-    val success: LiveData<Boolean> = _success
-
-    private val _mensajeError = MutableLiveData<String?>()
-    val mensajeError: LiveData<String?> = _mensajeError
+    private val _estadoUI = MutableLiveData<EstadoUI<Boolean>>()
+    val estadoUI: LiveData<EstadoUI<Boolean>> = _estadoUI
 
     private val _usuariosMap = mutableStateMapOf<String, UsuarioFire?>()
     val usuariosMap: Map<String, UsuarioFire?> get() = _usuariosMap
 
     private var publicacionesJob: Job? = null
 
-    // Nos suscribimos directamente al flujo expuesto por el repositorio
     val publicaciones = publicacionesRepository.publicacionesFlow
 
     init {
@@ -46,40 +40,57 @@ class FeedViewModel(
 
     fun obtenerPublicaciones() {
         publicacionesJob?.cancel()
-
+        _estadoUI.value = EstadoUI.Cargando
         publicacionesJob = viewModelScope.launch {
-            _isLoading.value = true
-
-            publicaciones
-                .catch { e ->
-                    _mensajeError.value = e.message
-                    _success.value = false
-                    _isLoading.value = false
-                }
-                .collect { publicacionesList ->
-                    cargarUsuarios(publicacionesList.mapNotNull { it.usuario }.distinct())
-                    _success.value = true
-                    _isLoading.value = false
-                }
+            publicaciones.collect { publicacionesList ->
+                val userIds = publicacionesList.mapNotNull { it.usuario }.distinct()
+                cargarUsuarios(userIds)
+            }
         }
     }
 
     private fun cargarUsuarios(userIds: List<String>) {
         viewModelScope.launch {
-            try {
-                val usuarios = userIds.associateWith { id ->
-                    usuarioRepository.obtenerUsuarioPorId(id)
+            val resultado = obtenerUsuarios(userIds)
+            when (resultado) {
+                is Resultado.Exito -> {
+                    _usuariosMap.clear()
+                    _usuariosMap.putAll(resultado.datos)
+                    _estadoUI.value = EstadoUI.Exito(true)
                 }
-                _usuariosMap.clear()
-                _usuariosMap.putAll(usuarios)
-            } catch (e: Exception) {
-                // Manejo de error opcional
+                is Resultado.Error -> {
+                    _estadoUI.value = EstadoUI.Error("Error al cargar usuarios: ${resultado.mensaje}")
+                }
             }
         }
     }
 
+    private suspend fun obtenerUsuarios(userIds: List<String>): Resultado<Map<String, UsuarioFire?>> {
+        val usuariosMap = mutableMapOf<String, UsuarioFire?>()
+
+        for (id in userIds) {
+            when (val resultado = usuarioRepository.obtenerUsuarioPorId(id)) {
+                is Resultado.Exito -> {
+                    usuariosMap[id] = resultado.datos
+                }
+                is Resultado.Error -> {
+                    return Resultado.Error("Error al obtener usuario con ID $id: ${resultado.mensaje}", resultado.exception)
+                }
+            }
+        }
+
+        return Resultado.Exito(usuariosMap)
+    }
+
     suspend fun obtenerUsuarioActual(): UsuarioFire {
-        return usuarioRepository.obtenerUsuarioActual()
+        when (val resultado = usuarioRepository.obtenerUsuarioActual()) {
+            is Resultado.Exito -> {
+                return resultado.datos
+            }
+            is Resultado.Error -> {
+                throw Exception("Error al obtener usuario actual: ${resultado.mensaje}")
+            }
+        }
     }
 
     override fun leGustaAlUsuario(publicacion: PublicacionFire, idUsuario: String): Boolean {
@@ -111,20 +122,16 @@ class FeedViewModel(
     fun limpiarDatos() {
         publicacionesJob?.cancel()
         _usuariosMap.clear()
-        _success.value = false
-        _mensajeError.value = null
+        _estadoUI.value = EstadoUI.Vacio
     }
 
     fun recargarPublicaciones() {
-        _isLoading.value = true
         limpiarDatos()
         publicacionesRepository.iniciarEscuchaPublicacionesEnTiempoReal()
         obtenerPublicaciones()
-        _isLoading.value = false
-
     }
-
 }
+
 
 
 class FeedViewModelFactory(

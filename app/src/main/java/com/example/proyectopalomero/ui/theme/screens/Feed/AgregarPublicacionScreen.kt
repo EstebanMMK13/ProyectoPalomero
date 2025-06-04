@@ -1,6 +1,5 @@
 package com.example.proyectopalomero.ui.theme.screens.Feed
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +12,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -34,10 +34,7 @@ import androidx.navigation.NavController
 import com.example.proyectopalomero.UsuarioViewModel
 
 import com.example.proyectopalomero.data.model.PublicacionFire
-import com.example.proyectopalomero.data.repository.PublicacionesRepository
-import com.example.proyectopalomero.data.utils.Routes
 import com.example.proyectopalomero.data.utils.utilsMostrarToast
-import com.example.proyectopalomero.navigation.safeNavigate
 import com.google.firebase.Timestamp
 
 
@@ -45,6 +42,7 @@ import com.google.firebase.Timestamp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AgregarPublicacionScreen(
+    snackbarHostState: SnackbarHostState,
     navController: NavController,
     feedViewModel: FeedViewModel,
     usuarioViewModel: UsuarioViewModel

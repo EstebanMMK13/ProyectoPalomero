@@ -1,7 +1,5 @@
 package com.example.proyectopalomero.ui.theme.screens.Perfil
 
-import android.util.Log
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -16,13 +14,13 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -40,7 +38,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -48,7 +45,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.proyectopalomero.BackEnd.ComprobarNickName
-import com.example.proyectopalomero.BackEnd.listaDeFotos
 import com.example.proyectopalomero.UsuarioViewModel
 import com.example.proyectopalomero.data.model.UsuarioFire
 import com.example.proyectopalomero.data.utils.Routes
@@ -59,6 +55,7 @@ import com.example.proyectopalomero.navigation.safeNavigate
 //Pantalla de edición de perfil
 @Composable
 fun EditarPerfilScreen(
+    snackbarHostState: SnackbarHostState,
     navController: NavController,
     usuarioViewModel: UsuarioViewModel,
     perfilViewModel: PerfilViewModel

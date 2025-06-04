@@ -7,49 +7,56 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.proyectopalomero.data.model.UsuarioFire
 import com.example.proyectopalomero.data.repository.UsuarioRepository
+import com.example.proyectopalomero.data.utils.EstadoUI
+import com.example.proyectopalomero.data.utils.Resultado
 import kotlinx.coroutines.launch
 
 class RegisterViewModel(
     private val usuarioRepository: UsuarioRepository
 ) : ViewModel() {
 
-    private val _registroExito = MutableLiveData<Boolean>()
-    val registroExito: LiveData<Boolean> = _registroExito
-
-    private val _errorMensaje = MutableLiveData<String?>()
-    val errorMensaje: LiveData<String?> = _errorMensaje
+    private val _estadoUI = MutableLiveData<EstadoUI<Boolean>>(EstadoUI.Vacio)
+    val estadoUI: LiveData<EstadoUI<Boolean>> = _estadoUI
 
     fun registrarUsuarioCompleto(usuario: UsuarioFire, password: String) {
+        _estadoUI.value = EstadoUI.Cargando
+
         viewModelScope.launch {
             val validacion = usuarioRepository.validarRegistro(usuario, password)
             if (validacion != null) {
-                _errorMensaje.postValue(validacion)
-                _registroExito.postValue(false)
+                _estadoUI.value = EstadoUI.Error(validacion)
                 return@launch
             }
 
-            val existeNickname = usuarioRepository.verificarNicknameExistente(usuario.nickname!!)
-            if (existeNickname) {
-                _errorMensaje.postValue("El usuario ya existe")
-                _registroExito.postValue(false)
-                return@launch
+            when (val nicknameCheck = usuarioRepository.verificarNicknameExistente(usuario.nickname!!)) {
+                is Resultado.Exito -> {
+                    if (nicknameCheck.datos == true) {
+                        _estadoUI.value = EstadoUI.Error("El usuario ya existe")
+                        return@launch
+                    }
+                }
+                is Resultado.Error -> {
+                    _estadoUI.value = EstadoUI.Error(nicknameCheck.mensaje)
+                    return@launch
+                }
             }
 
-            val exito = usuarioRepository.registrarUsuario(usuario, password)
-            if (exito) {
-                _registroExito.postValue(true)
-                _errorMensaje.postValue(null)
-            } else {
-                _registroExito.postValue(false)
-                _errorMensaje.postValue("Error en el registro")
+            when (val resultado = usuarioRepository.registrarUsuario(usuario, password)) {
+                is Resultado.Exito -> {
+                    _estadoUI.value = EstadoUI.Exito(true)
+                }
+                is Resultado.Error -> {
+                    _estadoUI.value = EstadoUI.Error(resultado.mensaje)
+                }
             }
         }
     }
+
     fun limpiarEstado() {
-        _registroExito.value = false
-        _errorMensaje.value = null
+        _estadoUI.value = EstadoUI.Vacio
     }
 }
+
 
 
 

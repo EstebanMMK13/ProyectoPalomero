@@ -26,6 +26,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,21 +43,22 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import com.example.proyectopalomero.UsuarioViewModel
-import com.example.proyectopalomero.data.repository.AppContainer
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.example.proyectopalomero.data.utils.Routes
 import com.example.proyectopalomero.navigation.safeNavigate
 
 @Composable
 fun NuevoChatScreen(
+    snackbarHostState: SnackbarHostState,
     navHostController: NavHostController,
     usuarioViewModel: UsuarioViewModel,
     chatViewModel: ChatViewModel
 ) {
+    val exito by chatViewModel.exito.observeAsState()
+    val mensajeError by chatViewModel.mensajeError.observeAsState()
 
     val usuarioActual = usuarioViewModel.usuario.collectAsState().value
     val listaUsuarios = chatViewModel.listaUsuarios.observeAsState().value
@@ -66,6 +68,14 @@ fun NuevoChatScreen(
 
     val isLoading = remember { mutableStateOf(true) }
     val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(mensajeError) {
+        mensajeError?.let {
+            snackbarHostState.showSnackbar(it)
+            // opcional: resetear mensajeError después de mostrar
+            // chatViewModel.limpiarMensajeError()
+        }
+    }
 
     LaunchedEffect(usuarioActual) {
         usuarioActual?.id?.let {

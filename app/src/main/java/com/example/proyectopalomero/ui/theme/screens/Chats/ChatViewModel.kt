@@ -1,6 +1,5 @@
 package com.example.proyectopalomero.ui.theme.screens.Chats
 
-import android.util.Log
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -10,15 +9,14 @@ import androidx.lifecycle.viewModelScope
 import com.example.proyectopalomero.data.model.ChatDto
 import com.example.proyectopalomero.data.model.ChatFire
 import com.example.proyectopalomero.data.model.MensajeFire
-import com.example.proyectopalomero.data.model.PublicacionFire
 import com.example.proyectopalomero.data.model.UsuarioFire
 import com.example.proyectopalomero.data.repository.ChatsRepository
-import com.example.proyectopalomero.data.repository.PublicacionesRepository
 import com.example.proyectopalomero.data.repository.UsuarioRepository
+import com.example.proyectopalomero.data.utils.EstadoUI
 import com.example.proyectopalomero.data.utils.Resultado
-import com.example.proyectopalomero.ui.theme.screens.Feed.FeedViewModel
+import com.example.proyectopalomero.data.utils.errorGeneral
+import com.example.proyectopalomero.data.utils.errorSnackBar
 import com.google.firebase.Timestamp
-import com.google.firebase.database.ValueEventListener
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,11 +28,8 @@ class ChatViewModel(
     private val usuarioRepository: UsuarioRepository
 ) : ViewModel() {
 
-    private val _exito = MutableLiveData<Boolean>()
-    val exito: LiveData<Boolean> = _exito
-
-    private val _mensajeError = MutableLiveData<String?>()
-    val mensajeError: LiveData<String?> = _mensajeError
+    private val _estadoUI = MutableStateFlow<EstadoUI<Boolean>>(EstadoUI.Vacio)
+    val estadoUI: StateFlow<EstadoUI<Boolean>> = _estadoUI.asStateFlow()
 
     // Chats y usuarios en chats
     private val _chats = MutableStateFlow<List<ChatFire>>(emptyList())
@@ -71,6 +66,7 @@ class ChatViewModel(
 
     fun obtenerChats(usuarioId: String) {
         viewModelScope.launch {
+            _estadoUI.value = EstadoUI.Cargando
             chatsRepository.obtenerChats(usuarioId).collect { chatsObtenidos ->
                 val chatsOrdenados = chatsObtenidos.sortedByDescending { it.fechaMensaje }
                 _chats.value = chatsOrdenados
@@ -84,13 +80,15 @@ class ChatViewModel(
                 for (id in userIds) {
                     when (val resultado = usuarioRepository.obtenerUsuarioPorId(id)) {
                         is Resultado.Exito -> {
-                            _exito.postValue(true)
-                            _mensajeError.postValue(null)
+                            _estadoUI.value = EstadoUI.Exito(true)
                             usuarios[id] = resultado.datos
                         }
+
                         is Resultado.Error -> {
-                            _exito.postValue(false)
-                            _mensajeError.postValue(resultado.mensaje)
+                            _estadoUI.value = EstadoUI.Error(
+                                "Error al obtener usuario: ${resultado.mensaje}",
+                                errorGeneral
+                            )
                             usuarios[id] = null
                         }
                     }
@@ -102,6 +100,7 @@ class ChatViewModel(
     }
 
     fun cargarMensajes() {
+
         val chatId = _chatSeleccionado.value?.id ?: return
         jobMensajes?.cancel()  // Cancelar cualquier carga previa de mensajes
         jobMensajes = viewModelScope.launch {
@@ -130,49 +129,61 @@ class ChatViewModel(
 
     fun cargarUsuarioChat(idUsuario: String) {
         viewModelScope.launch {
-           when (val resultado = usuarioRepository.obtenerUsuarioPorId(idUsuario)){
-               is Resultado.Exito -> {
-                   _exito.postValue(true)
-                   _mensajeError.postValue(null)
-                   _usuarioChat.value = resultado.datos
-               }
-               is Resultado.Error -> {
-                   _exito.postValue(false)
-                   _mensajeError.postValue(resultado.mensaje)
-               }
-           }
+            when (val resultado = usuarioRepository.obtenerUsuarioPorId(idUsuario)) {
+                is Resultado.Exito -> {
+                    _estadoUI.value = EstadoUI.Exito(true)
+                    _usuarioChat.value = resultado.datos
+                }
+
+                is Resultado.Error -> {
+                    _estadoUI.value = EstadoUI.Error(
+                        "Error al obtener usuario: ${resultado.mensaje}",
+                        errorSnackBar
+                    )
+                }
+            }
 
         }
     }
 
-    fun cargarUsuarios(idUsuario : String) {
+    fun cargarUsuarios(idUsuario: String) {
         viewModelScope.launch {
-           when( val resultado = usuarioRepository.obtenerUsuarios()){
-               is Resultado.Exito -> {
-                   _exito.postValue(true)
-                   _mensajeError.postValue(null)
-                   _listaUsuarios.value = resultado.datos.filter { it.id != idUsuario }
-               }
-               is Resultado.Error -> {
-                   _exito.postValue(false)
-                   _mensajeError.postValue(resultado.mensaje)
-               }
-           }
+            when (val resultado = usuarioRepository.obtenerUsuarios()) {
+                is Resultado.Exito -> {
+                    _estadoUI.value = EstadoUI.Exito(true)
+                    _listaUsuarios.value = resultado.datos.filter { it.id != idUsuario }
+                }
+
+                is Resultado.Error -> {
+                    _estadoUI.value = EstadoUI.Error(
+                        "Error al cargar usuarios: ${resultado.mensaje}",
+                        errorSnackBar
+                    )
+                }
+            }
         }
     }
 
     fun buscarUsuario(nickname: String) {
-        viewModelScope.launch {
-            when (val resultado = usuarioRepository.obtenerUsuarioPorNickname(nickname)){
-                is Resultado.Exito -> {
-                    _exito.postValue(true)
-                    _mensajeError.postValue(null)
-                    _usuarioNuevoChat.value = resultado.datos
-                    _listaUsuarios.value = if (resultado.datos != null) listOf(resultado.datos) else emptyList()
-                }
-                is Resultado.Error -> {
-                    _exito.postValue(false)
-                    _mensajeError.postValue(resultado.mensaje)
+
+        if (!usuarioRepository.comprobarNickName(nickname)) {
+            _estadoUI.value = EstadoUI.Error("El nickname debe comenzar con @", errorSnackBar)
+        } else {
+            viewModelScope.launch {
+                when (val resultado = usuarioRepository.obtenerUsuarioPorNickname(nickname)) {
+                    is Resultado.Exito -> {
+                        _usuarioNuevoChat.value = resultado.datos
+                        _listaUsuarios.value =
+                            if (resultado.datos != null) {listOf(resultado.datos)}
+                            else { emptyList() }
+                        _estadoUI.value = EstadoUI.Exito(true)
+                    }
+                    is Resultado.Error -> {
+                        _estadoUI.value = EstadoUI.Error(
+                            "Error al buscar el usuario: ${resultado.mensaje}",
+                            errorSnackBar
+                        )
+                    }
                 }
             }
         }
@@ -180,26 +191,60 @@ class ChatViewModel(
 
     fun comprobarChat(idUsuario1: String, idUsuario2: String) {
         viewModelScope.launch {
-            val chatExistente = chatsRepository.obtenerChatPorUsuarios(idUsuario1, idUsuario2)
-            if (chatExistente != null) {
-                _chatSeleccionado.value = chatExistente
-            } else {
-                // Crear nuevo chat
-                val usuariosOrdenados = listOf(idUsuario1, idUsuario2).sorted()
-                val nuevoChat = ChatDto(
-                    usuarios = usuariosOrdenados,
-                    horaUltimoMensaje = Timestamp.now(),
-                    ultimoMensaje = ""
-                )
-                val chatCreado = chatsRepository.crearChat(nuevoChat)
-                _chatSeleccionado.value = chatCreado
+            val resultado = chatsRepository.obtenerChatPorUsuarios(idUsuario1, idUsuario2)
+            when (resultado) {
+                is Resultado.Exito -> {
+                    if (resultado.datos != null) {
+                        _chatSeleccionado.value = resultado.datos
+                    } else {
+                        // Crear nuevo chat
+                        val usuariosOrdenados = listOf(idUsuario1, idUsuario2).sorted()
+                        val nuevoChat = ChatDto(
+                            usuarios = usuariosOrdenados,
+                            fechaUMensaje = Timestamp.now(),
+                            ultimoMensaje = ""
+                        )
+                        val chatCreado = chatsRepository.crearChat(nuevoChat)
+                        when (chatCreado) {
+                            is Resultado.Exito -> {
+                                _estadoUI.value = EstadoUI.Exito(true)
+                                _chatSeleccionado.value = chatCreado.datos
+                            }
+
+                            is Resultado.Error -> {
+                                _estadoUI.value = EstadoUI.Error(
+                                    "Error al crear el chat: ${chatCreado.mensaje}",
+                                    errorSnackBar
+                                )
+                            }
+                        }
+                    }
+                }
+
+                is Resultado.Error -> {
+                    _estadoUI.value = EstadoUI.Error(
+                        "Error al buscar el chat: ${resultado.mensaje}",
+                        errorSnackBar
+                    )
+                }
             }
         }
     }
 
-    fun borrarChat(idChat : String){
+    fun borrarChat(idChat: String) {
         viewModelScope.launch {
-            chatsRepository.borrarChat(idChat)
+            when (val resultado = chatsRepository.borrarChat(idChat)) {
+                is Resultado.Exito -> {
+                    _estadoUI.value = EstadoUI.Exito(true)
+                }
+
+                is Resultado.Error -> {
+                    _estadoUI.value = EstadoUI.Error(
+                        "Error al borrar el chat: ${resultado.mensaje}",
+                        errorSnackBar
+                    )
+                }
+            }
         }
     }
 
@@ -220,7 +265,7 @@ class ChatViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ChatViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return ChatViewModel(chatsRepository,usuarioRepository) as T
+            return ChatViewModel(chatsRepository, usuarioRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

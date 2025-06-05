@@ -90,7 +90,7 @@ fun NavigationWrapper(
           //  enterTransition = { AnimacionEntrada() },
           //  exitTransition = { AnimacionSalida() }
         ) {
-            AgregarPublicacionScreen(snackbarHostState,navHostController, feedViewModel,usuarioViewModel)
+            AgregarPublicacionScreen(snackbarHostState,navHostController,usuarioViewModel)
         }
         composable(Routes.EDITAR_PERFIL) {
             EditarPerfilScreen(snackbarHostState,navHostController,usuarioViewModel,perfilViewModel)

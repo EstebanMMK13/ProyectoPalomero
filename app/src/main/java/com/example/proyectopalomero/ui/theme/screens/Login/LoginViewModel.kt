@@ -8,22 +8,27 @@ import androidx.lifecycle.viewModelScope
 import com.example.proyectopalomero.data.repository.UsuarioRepository
 import com.example.proyectopalomero.data.utils.EstadoUI
 import com.example.proyectopalomero.data.utils.Resultado
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.example.proyectopalomero.data.utils.errorGeneral
+import com.example.proyectopalomero.data.utils.errorSnackBar
 
 class LoginViewModel(private val usuarioRepository: UsuarioRepository) : ViewModel() {
 
-    private val _estadoUI = MutableLiveData<EstadoUI<Boolean>>(EstadoUI.Vacio)
-    val estadoUI: LiveData<EstadoUI<Boolean>> = _estadoUI
+    private val _estadoUI = MutableStateFlow<EstadoUI<Boolean>>(EstadoUI.Vacio)
+    val estadoUI: StateFlow<EstadoUI<Boolean>> = _estadoUI.asStateFlow()
 
     fun login(email: String, password: String) {
         _estadoUI.value = EstadoUI.Cargando
         viewModelScope.launch {
             when (val resultado = usuarioRepository.login(email, password)) {
                 is Resultado.Exito -> {
-                    _estadoUI.postValue(EstadoUI.Exito(true))
+                    _estadoUI.value =EstadoUI.Exito(true)
                 }
                 is Resultado.Error -> {
-                    _estadoUI.postValue(EstadoUI.Error(resultado.mensaje))
+                    _estadoUI.value =EstadoUI.Error(resultado.mensaje, errorSnackBar)
                 }
             }
         }

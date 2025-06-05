@@ -2,6 +2,7 @@ package com.example.proyectopalomero.ui.theme.screens.Perfil
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -48,13 +50,14 @@ import coil3.compose.AsyncImage
 import com.example.proyectopalomero.UsuarioViewModel
 import com.example.proyectopalomero.data.model.PublicacionFire
 import com.example.proyectopalomero.data.model.UsuarioFire
+import com.example.proyectopalomero.data.utils.EstadoUI
+import com.example.proyectopalomero.data.utils.EstadoUIHandler
 import com.example.proyectopalomero.data.utils.MiNavigationBar
 import com.example.proyectopalomero.data.utils.Routes
 import com.example.proyectopalomero.navigation.safeNavigate
 import com.example.proyectopalomero.ui.theme.Components.Publicacion.MostrarPublicacion
 import com.example.proyectopalomero.ui.theme.screens.Feed.FeedFab
 import com.example.proyectopalomero.ui.theme.screens.Feed.FeedTopAppBar
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,37 +68,50 @@ fun PerfilScreen(
     perfilViewModel: PerfilViewModel,
     cerrarSesion: MutableState<Boolean>
 ) {
-
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    var usuarioActual = usuarioViewModel.usuario.collectAsState().value
+    val usuarioActual by usuarioViewModel.usuario.collectAsState()
+    val estadoUI by perfilViewModel.estadoUI.collectAsState()
 
-    LaunchedEffect(Unit) {
-        perfilViewModel.observarPublicacionesPorUsuario(usuarioActual?.id ?: "")
+    // Escuchar publicaciones para el usuario actual
+    LaunchedEffect(usuarioActual?.id) {
+        usuarioActual?.id?.let { perfilViewModel.observarPublicacionesPorUsuario(it) }
+    }
+
+    // Mostrar error en snackbar si hay
+    LaunchedEffect(estadoUI) {
+        if (estadoUI is EstadoUI.Error) {
+            val mensaje = (estadoUI as EstadoUI.Error).mensaje
+            snackbarHostState.showSnackbar(mensaje)
+        }
     }
 
     Scaffold(
         topBar = { FeedTopAppBar(scrollBehavior = scrollBehavior, nicknameTop = usuarioActual?.nickname ?: "Desconocido") },
         bottomBar = { MiNavigationBar(navHostController) },
         floatingActionButton = { FeedFab(navHostController) },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .nestedScroll(scrollBehavior.nestedScrollConnection),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            MiPerfil(
-                usuario = usuarioActual,
-                navHostController = navHostController,
-                perfilViewModel = perfilViewModel,
-                usuarioViewModel = usuarioViewModel,
-                cerrarSesion = cerrarSesion
-            )
-            MisPublicaciones(scrollBehavior = scrollBehavior, usuario = usuarioActual,perfilViewModel = perfilViewModel)
+        EstadoUIHandler(estadoUI,snackbarHostState) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .nestedScroll(scrollBehavior.nestedScrollConnection),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                MiPerfil(
+                    usuario = usuarioActual,
+                    navHostController = navHostController,
+                    perfilViewModel = perfilViewModel,
+                    usuarioViewModel = usuarioViewModel,
+                    cerrarSesion = cerrarSesion
+                )
+                MisPublicaciones(scrollBehavior = scrollBehavior, usuario = usuarioActual, perfilViewModel = perfilViewModel)
+            }
         }
     }
 }
+
 
 //Funcion para mostrar el perfil del usuario
 @Composable
@@ -208,211 +224,35 @@ fun MiPerfil(
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MisPublicaciones(modifier: Modifier = Modifier,scrollBehavior: TopAppBarScrollBehavior ,usuario: UsuarioFire?, perfilViewModel: PerfilViewModel) {
-
-    var misPublicaciones = remember { mutableStateOf<List<PublicacionFire>>(emptyList()) }
-    val isLoading by perfilViewModel.isLoading.collectAsState(initial = true)
-
-    misPublicaciones.value = perfilViewModel.publicaciones.collectAsState().value
-
-    if (isLoading) {
-        CircularProgressIndicator()
-    } else {
-        //Comprobar si hay publicaciones
-        if (misPublicaciones.value.isEmpty()) {
-            Text(
-                text = "No tienes publicaciones aún.",
-                modifier = modifier.padding(16.dp),
-                style = MaterialTheme.typography.bodyLarge
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .nestedScroll(scrollBehavior.nestedScrollConnection)
-            ) {
-                items(misPublicaciones.value.size) { index ->
-                    val publicacion = misPublicaciones.value[index]
-                    if (usuario != null) {
-                        MostrarPublicacion(publicacion, usuario,usuario ,perfilViewModel)
-                    }
-                }
-            }
-        }
-    }
-}
-
-/*
-@Composable
-fun MostrarPublicacion(
-    publicacion: PublicacionFire,
-    usuario: UsuarioFire,
-    perfilViewModel: PerfilViewModel,
-) {
-
-    Card(
-        modifier = Modifier
-            .padding(horizontal = 3.dp, vertical = 2.dp)
-            .fillMaxWidth()
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Row(modifier = Modifier.fillMaxWidth()) {
-                UsuarioHeader(usuario,perfilViewModel,publicacion)
-            }
-            Spacer(modifier = Modifier.height(3.dp))
-
-            Row(modifier = Modifier.fillMaxWidth()) {
-                ContenidoPublicacion(publicacion)
-            }
-
-            Spacer(modifier = Modifier.height(3.dp))
-
-            Row(modifier = Modifier.fillMaxWidth()) {
-                AccionesPublicacion(publicacion, usuario, perfilViewModel)
-            }
-        }
-    }
-}
-
-
-@Composable
-fun UsuarioHeader(
-    usuarioActual: UsuarioFire,
-    perfilViewModel: PerfilViewModel,
-    publicacion: PublicacionFire
-) {
-    var expandirImagen by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        AsyncImage(
-            model = usuarioActual.fotoPerfil,
-            contentDescription = "Foto de perfil",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(60.dp)
-                .clip(CircleShape)
-                .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                .pointerInput(true) {
-                    detectTapGestures(onLongPress = { expandirImagen = true })
-                }
-        )
-
-        Spacer(modifier = Modifier.width(10.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = usuarioActual.nombre ?: "Nombre desconocido",
-                fontSize = 20.sp,
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = usuarioActual.nickname ?: "Nickname desconocido",
-                color = MaterialTheme.colorScheme.secondary
-            )
-        }
-
-            var expanded by remember { mutableStateOf(false) }
-            Box {
-                IconButton(onClick = { expanded = true }) {
-                    Icon(Icons.Filled.MoreVert, contentDescription = "Opciones")
-                }
-
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Eliminar") },
-                        leadingIcon = {
-                            Icon(Icons.Filled.Delete, tint = amarilloSecundario,contentDescription = "Eliminar")
-                        },
-                        onClick = {
-                            scope.launch { perfilViewModel.eliminarPublicacion(publicacion.id!!) }
-                            expanded = false }
-                    )
-                }
-            }
-    }
-
-    if (expandirImagen) {
-        Dialog(onDismissRequest = { expandirImagen = false }) {
-            Box(
-                modifier = Modifier.background(Color.Black.copy(alpha = 0.0f)),
-                contentAlignment = Alignment.Center
-            ) {
-                AsyncImage(
-                    model = usuarioActual.fotoPerfil,
-                    contentDescription = "Imagen ampliada",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(300.dp)
-                        .clip(CircleShape)
-                        .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun ContenidoPublicacion(publicacion: PublicacionFire) {
-    Text(
-        text = publicacion.contenido ?: "",
-        fontSize = 15.sp,
-        textAlign = TextAlign.Justify,
-        style = MaterialTheme.typography.bodyLarge,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 10.dp, vertical = 10.dp)
-    )
-}
-
-@Composable
-fun AccionesPublicacion(
-    publicacion: PublicacionFire,
-    usuarioActual: UsuarioFire,
+fun MisPublicaciones(
+    modifier: Modifier = Modifier,
+    scrollBehavior: TopAppBarScrollBehavior,
+    usuario: UsuarioFire?,
     perfilViewModel: PerfilViewModel
 ) {
-    var meGusta by remember(publicacion.listaMeGustas, usuarioActual.id) {
-        mutableStateOf(perfilViewModel.leGustaAlUsuario(publicacion, usuarioActual.id ?: ""))
-    }
+    val publicaciones by perfilViewModel.publicaciones.collectAsState()
 
-    val animacionMeGusta by animateFloatAsState(if (meGusta) 1.5f else 1.0f)
-    val colorFav = if (meGusta) Color.Red else amarilloSecundario
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Filled.Favorite,
-            contentDescription = "Me gusta",
-            tint = colorFav,
-            modifier = Modifier
-                .clickable {
-                    perfilViewModel.alternarMeGusta(publicacion, usuarioActual.id ?: "")
-                    meGusta = !meGusta
-                }
-                .scale(animacionMeGusta)
-                .size(28.dp)
-        )
-        Spacer(modifier = Modifier.width(9.dp))
+    if (publicaciones.isEmpty()) {
         Text(
-            text = "${publicacion.listaMeGustas?.size ?: 0}",
-            fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onSurface
+            text = "No tienes publicaciones aún.",
+            modifier = modifier.padding(16.dp),
+            style = MaterialTheme.typography.bodyLarge
         )
+    } else {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .nestedScroll(scrollBehavior.nestedScrollConnection)
+        ) {
+            items(publicaciones.size) { index ->
+                val publicacion = publicaciones[index]
+                if (usuario != null) {
+                    MostrarPublicacion(publicacion, usuario, usuario, perfilViewModel)
+                }
+            }
+        }
     }
 }
- */
+

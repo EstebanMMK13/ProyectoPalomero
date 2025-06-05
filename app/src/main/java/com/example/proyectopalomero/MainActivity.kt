@@ -95,7 +95,6 @@ class MainActivity : ComponentActivity() {
                 UtilsCambiarTema(temaOscuro)
                 val weatherViewModel = ViewModelProvider(this)[WeatherViewModel::class.java]
                 val snackbarHostState = remember { SnackbarHostState() }
-
                 NavigationWrapper(
                     temaOscuro,
                     snackbarHostState = snackbarHostState,

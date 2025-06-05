@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.proyectopalomero.data.model.UsuarioDto
 import com.example.proyectopalomero.data.model.UsuarioFire
 import com.example.proyectopalomero.data.utils.Resultado
+import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
@@ -23,9 +24,14 @@ class UsuarioDao(
             Resultado.Exito(true)
         } catch (e: FirebaseAuthInvalidUserException) {
             Resultado.Error("Usuario no encontrado", e)
+
         } catch (e: FirebaseAuthInvalidCredentialsException) {
             Resultado.Error("Email o contraseña incorrectos", e)
-        } catch (e: Exception) {
+
+        } catch (e: FirebaseNetworkException) {
+            Resultado.Error("Sin conexión a internet")
+
+        }catch (e: Exception) {
             Resultado.Error("Error inesperado: ${e.localizedMessage}", e)
         }
     }

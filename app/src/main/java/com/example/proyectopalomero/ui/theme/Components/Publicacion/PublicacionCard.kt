@@ -140,9 +140,7 @@ fun UsuarioHeader(
                             )
                         },
                         onClick = {
-                            scope.launch {
-                                acciones.eliminarPublicacion(publicacion.id!!)
-                            }
+                            acciones.eliminarPublicacion(publicacion.id!!)
                             expanded = false
                         }
                     )

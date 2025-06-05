@@ -22,9 +22,10 @@ class UsuarioRepository(private val usuarioDao: UsuarioDao) {
         "https://i.postimg.cc/Jh0RLWnL/avatar-Paloma-Verde-Osucro.jpg",
         "https://i.postimg.cc/N0nBGP9r/avatar-Paloma-Verde.jpg",
         "https://i.postimg.cc/4xNg6Tp9/avatar-Paloma-Principal.jpg",
-        "https://i.postimg.cc/rwnLgY9Y/avatar-Paloma-Secundario.jpg"
+        "https://i.postimg.cc/rwnLgY9Y/avatar-Paloma-Secundario.jpg",
     )
 
+    private var fotoAdmin = "https://i.postimg.cc/tT5BnKBg/avatar-Paloma-Admin.jpg"
 
     fun getCurrentUser(): Boolean {
         return usuarioDao.getCurrentUser() != null
@@ -71,13 +72,14 @@ class UsuarioRepository(private val usuarioDao: UsuarioDao) {
     }
 
     suspend fun registrarUsuario(usuario: UsuarioFire, password: String): Resultado<Boolean> {
-        usuario.fotoPerfil = listaAvatares.random()
+
         var usuarioDto = UsuarioDto(
             nombre = usuario.nombre,
             nickname = usuario.nickname,
             correo = usuario.correo,
-            fotoPerfil = usuario.fotoPerfil
+            fotoPerfil = listaAvatares.random()
         )
+
         return usuarioDao.registrarUsuario(usuarioDto, password)
     }
 
@@ -91,7 +93,7 @@ class UsuarioRepository(private val usuarioDao: UsuarioDao) {
         }
     }
 
-    suspend fun actualizarUsuario(idUsuario: String, usuario: UsuarioFire) {
+    suspend fun actualizarUsuario(idUsuario: String, usuario: UsuarioFire) : Resultado<Unit>{
 
         val campos = mapOf(
             "nombre" to usuario.nombre,
@@ -99,9 +101,9 @@ class UsuarioRepository(private val usuarioDao: UsuarioDao) {
             "correo" to usuario.correo,
             "fotoPerfil" to usuario.fotoPerfil
         )
-        // Filtramos para quedarnos solo con campos que NO sean null
+
         val nuevoUsuario = campos.filterValues { it != null }
-        usuarioDao.actualizarUsuario(idUsuario, nuevoUsuario)
+        return usuarioDao.actualizarUsuario(idUsuario, nuevoUsuario)
     }
 
     fun listaDeAvatares(): List<String> {

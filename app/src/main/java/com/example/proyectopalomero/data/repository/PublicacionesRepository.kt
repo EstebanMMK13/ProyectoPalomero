@@ -3,6 +3,7 @@ package com.example.proyectopalomero.data.repository
 import com.example.proyectopalomero.data.dao.PublicacionesDao
 import com.example.proyectopalomero.data.model.PublicacionDTO
 import com.example.proyectopalomero.data.model.PublicacionFire
+import com.example.proyectopalomero.data.utils.Resultado
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -37,7 +38,7 @@ class PublicacionesRepository(private val publicacionesDao: PublicacionesDao) {
             publicaciones.filter { it.usuario == idUsuario }
         }
 
-    suspend fun agregarPublicacion(publicacion: PublicacionFire): String {
+    suspend fun agregarPublicacion(publicacion: PublicacionFire): Resultado<String> {
         val dto = PublicacionDTO(
             usuario = publicacion.usuario,
             contenido = publicacion.contenido,
@@ -49,9 +50,13 @@ class PublicacionesRepository(private val publicacionesDao: PublicacionesDao) {
     }
 
 
-    suspend fun eliminarPublicacion(idPublicacion: String) = publicacionesDao.eliminarPublicacion(idPublicacion)
+    suspend fun eliminarPublicacion(idPublicacion: String) =
+        publicacionesDao.eliminarPublicacion(idPublicacion)
 
-    fun darMeGustaPublicacion(idPublicacion: String, idUsuario: String) = publicacionesDao.darMeGustaPublicacion(idPublicacion, idUsuario)
-    fun quitarMeGustaPublicacion(idPublicacion: String, idUsuario: String) = publicacionesDao.quitarMeGustaPublicacion(idPublicacion, idUsuario)
+    suspend fun darMeGustaPublicacion(idPublicacion: String, idUsuario: String) =
+        publicacionesDao.darMeGustaPublicacion(idPublicacion, idUsuario)
+
+    suspend fun quitarMeGustaPublicacion(idPublicacion: String, idUsuario: String) =
+        publicacionesDao.quitarMeGustaPublicacion(idPublicacion, idUsuario)
 
 }

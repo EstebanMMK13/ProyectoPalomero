@@ -43,6 +43,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.proyectopalomero.R
@@ -63,7 +64,7 @@ fun LoginScreen(
     val loginViewModel: LoginViewModel = viewModel(
         factory = LoginViewModelFactory(AppContainer.usuarioRepository)
     )
-    val estadoUI by loginViewModel.estadoUI.observeAsState()
+    val estadoUI by loginViewModel.estadoUI.collectAsStateWithLifecycle(initialValue = EstadoUI.Vacio)
 
     var email by remember { mutableStateOf("estebanmm15@palomero.com") }
     var password by remember { mutableStateOf("123456") }

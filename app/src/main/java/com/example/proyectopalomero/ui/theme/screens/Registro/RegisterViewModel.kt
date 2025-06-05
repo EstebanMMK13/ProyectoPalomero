@@ -9,14 +9,19 @@ import com.example.proyectopalomero.data.model.UsuarioFire
 import com.example.proyectopalomero.data.repository.UsuarioRepository
 import com.example.proyectopalomero.data.utils.EstadoUI
 import com.example.proyectopalomero.data.utils.Resultado
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.example.proyectopalomero.data.utils.errorGeneral
+import com.example.proyectopalomero.data.utils.errorSnackBar
 
 class RegisterViewModel(
     private val usuarioRepository: UsuarioRepository
 ) : ViewModel() {
 
-    private val _estadoUI = MutableLiveData<EstadoUI<Boolean>>(EstadoUI.Vacio)
-    val estadoUI: LiveData<EstadoUI<Boolean>> = _estadoUI
+    private val _estadoUI = MutableStateFlow<EstadoUI<Boolean>>(EstadoUI.Vacio)
+    val estadoUI: StateFlow<EstadoUI<Boolean>> = _estadoUI.asStateFlow()
 
     fun registrarUsuarioCompleto(usuario: UsuarioFire, password: String) {
         _estadoUI.value = EstadoUI.Cargando
@@ -24,19 +29,18 @@ class RegisterViewModel(
         viewModelScope.launch {
             val validacion = usuarioRepository.validarRegistro(usuario, password)
             if (validacion != null) {
-                _estadoUI.value = EstadoUI.Error(validacion)
+                _estadoUI.value = EstadoUI.Error(validacion,errorSnackBar)
                 return@launch
             }
-
             when (val nicknameCheck = usuarioRepository.verificarNicknameExistente(usuario.nickname!!)) {
                 is Resultado.Exito -> {
                     if (nicknameCheck.datos == true) {
-                        _estadoUI.value = EstadoUI.Error("El usuario ya existe")
+                        _estadoUI.value = EstadoUI.Error("El usuario ya existe",errorSnackBar)
                         return@launch
                     }
                 }
                 is Resultado.Error -> {
-                    _estadoUI.value = EstadoUI.Error(nicknameCheck.mensaje)
+                    _estadoUI.value = EstadoUI.Error(nicknameCheck.mensaje,errorSnackBar)
                     return@launch
                 }
             }
@@ -46,7 +50,7 @@ class RegisterViewModel(
                     _estadoUI.value = EstadoUI.Exito(true)
                 }
                 is Resultado.Error -> {
-                    _estadoUI.value = EstadoUI.Error(resultado.mensaje)
+                    _estadoUI.value = EstadoUI.Error(resultado.mensaje,errorSnackBar)
                 }
             }
         }
@@ -56,9 +60,6 @@ class RegisterViewModel(
         _estadoUI.value = EstadoUI.Vacio
     }
 }
-
-
-
 
 class RegisterViewModelFactory(
     private val usuarioRepository: UsuarioRepository

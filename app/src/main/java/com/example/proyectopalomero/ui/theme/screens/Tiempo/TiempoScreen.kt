@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,10 +21,12 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
-import com.example.proyectopalomero.data.Api.NetworkResponse
 import com.example.proyectopalomero.data.model.WeatherModel
+import com.example.proyectopalomero.data.utils.EstadoUI
+import com.example.proyectopalomero.data.utils.EstadoUIHandler
 import com.example.proyectopalomero.data.utils.MiNavigationBar
 
 // Pantalla de Tiempo
@@ -31,12 +34,10 @@ import com.example.proyectopalomero.data.utils.MiNavigationBar
 fun WeatherScreen(
     snackbarHostState: SnackbarHostState,
     navHostController: NavHostController,
-    viewModel: WeatherViewModel
+    weatherViewModel: WeatherViewModel
 ) {
-
+    val estadoUI by weatherViewModel.estadoUI.collectAsStateWithLifecycle(initialValue = EstadoUI.Vacio)
     var ciudad by remember { mutableStateOf("") }
-
-    val weatherResult = viewModel.weatherResult.observeAsState() // Obtiene el resultado de la petición
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -74,33 +75,18 @@ fun WeatherScreen(
                     )
                 )
                 IconButton(onClick = {
-                    viewModel.getData(ciudad)
+                    weatherViewModel.getData(ciudad)
                     keyboardController?.hide()
                 }) {
                     Icon(imageVector = Icons.Filled.Search, contentDescription = "Busca")
                 }
             }
-            // Dependiendo del resultado de la petición, muestra el contenido correspondiente
-            when (val result = weatherResult.value) {
-                // Si la petición ha fallado se muestra el error
-                is NetworkResponse.Error -> {
-                    Text(
-                        text = result.message
-                    )
-                }
-                // Si la petición esta cargando se muestra el indicador de cargando
-                NetworkResponse.Loading -> {
-                    CircularProgressIndicator()
+
+            EstadoUIHandler(estadoUI, snackbarHostState) {
+                if (estadoUI is EstadoUI.Exito) {
+                    DetallesTiempo(datos = ((estadoUI as EstadoUI.Exito<WeatherModel>).datos))
                 }
 
-                // Si la petición ha sido exitosa se muestra el contenido
-                is NetworkResponse.Success -> {
-                    DetallesTiempo(datos = result.data)
-                }
-
-                is NetworkResponse.Empty -> {}
-
-                null -> {}
             }
         }
     }

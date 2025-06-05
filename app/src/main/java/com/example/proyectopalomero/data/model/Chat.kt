@@ -8,13 +8,11 @@ data class ChatFire(
     var id: String? = null,
     val usuarios : List<String>? = emptyList(),
     var ultimoMensaje: String? = null,
-    var fechaMensaje: Timestamp? = null,
-    var mensajes: List<MensajeFire>? = null
+    var fechaMensaje: Timestamp? = null
 )
 
 data class ChatDto(
     val usuarios : List<String>? = emptyList(),
     val ultimoMensaje: String? = "",
-    val horaUltimoMensaje: Timestamp? = null,
-    val listaMensajes: List<MensajeDto> = emptyList()
+    val fechaUMensaje: Timestamp? = null,
 )

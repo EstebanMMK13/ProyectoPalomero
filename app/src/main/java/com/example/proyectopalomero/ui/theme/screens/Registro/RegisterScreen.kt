@@ -39,6 +39,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.proyectopalomero.R
@@ -59,7 +60,7 @@ fun RegisterScreen(
     var registerViewModel: RegisterViewModel = viewModel(
         factory = RegisterViewModelFactory(AppContainer.usuarioRepository)
     )
-    val estadoUI by registerViewModel.estadoUI.observeAsState(initial = EstadoUI.Vacio)
+    val estadoUI by registerViewModel.estadoUI.collectAsStateWithLifecycle(initialValue = EstadoUI.Vacio)
 
     val keyboardController = LocalSoftwareKeyboardController.current
     LocalContext.current

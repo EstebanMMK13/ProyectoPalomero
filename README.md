@@ -2,8 +2,13 @@
 
 ![palomero](https://github.com/user-attachments/assets/a83e9e2d-f476-44fa-847e-897844c844ea)
 
-**Palomero** es una aplicación móvil innovadora que combina funcionalidades de redes sociales (tipo Twitter), mensajería instantánea (similar a WhatsApp) e información meteorológica en tiempo real.  
+## 📌 Descripción
+
+**Palomero** es una aplicación móvil innovadora desarrollada como **proyecto final de grado** para el ciclo formativo de **Grado Superior en Desarrollo de Aplicaciones Multiplataforma (DAM)**.
+
+Combina funcionalidades de redes sociales (tipo Twitter), mensajería instantánea (similar a WhatsApp) e información meteorológica en tiempo real.  
 Desarrollada con **Kotlin** y **Jetpack Compose**, ofrece una experiencia moderna, fluida e intuitiva.
+
 
 ---
 

@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,83 +21,76 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
-import com.example.proyectopalomero.BackEnd.Api.NetworkResponse
-import com.example.proyectopalomero.BackEnd.Api.WeatherModel
-import com.example.proyectopalomero.BackEnd.WeatherViewModel
+import com.example.proyectopalomero.data.model.WeatherModel
+import com.example.proyectopalomero.data.utils.EstadoUI
+import com.example.proyectopalomero.data.utils.EstadoUIHandler
+import com.example.proyectopalomero.data.utils.MiNavigationBar
 
 // Pantalla de Tiempo
 @Composable
 fun WeatherScreen(
-    modifier: Modifier,
-    viewModel: WeatherViewModel
+    snackbarHostState: SnackbarHostState,
+    navHostController: NavHostController,
+    weatherViewModel: WeatherViewModel
 ) {
-
+    val estadoUI by weatherViewModel.estadoUI.collectAsStateWithLifecycle(initialValue = EstadoUI.Vacio)
     var ciudad by remember { mutableStateOf("") }
-
-    val weatherResult = viewModel.weatherResult.observeAsState() // Obtiene el resultado de la petición
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    Scaffold(
+        bottomBar = { MiNavigationBar(navHostController) },
 
-        Row(
+    ) { innerPadding ->
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceEvenly
+                .padding(innerPadding),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            OutlinedTextField(
-                maxLines = 1,
-                modifier = Modifier.weight(1f),
-                value = ciudad,
-                onValueChange = { ciudad = it },
-                label = { Text(text = "Busca una ciudad (ingles)") },
-                keyboardOptions = KeyboardOptions.Default.copy(
-                    imeAction = ImeAction.Done
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        keyboardController?.hide()
-                    }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                OutlinedTextField(
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f),
+                    value = ciudad,
+                    onValueChange = { ciudad = it },
+                    label = { Text(text = "Busca una ciudad (ingles)") },
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            keyboardController?.hide()
+                        }
+                    )
                 )
-            )
-            IconButton(onClick = {
-                viewModel.getData(ciudad)
-                keyboardController?.hide()
-            }) {
-                Icon(imageVector = Icons.Filled.Search, contentDescription = "Busca")
-            }
-        }
-        // Dependiendo del resultado de la petición, muestra el contenido correspondiente
-        when (val result = weatherResult.value) {
-            // Si la petición ha fallado se muestra el error
-            is NetworkResponse.Error -> {
-                Text(
-                    text = result.message
-                )
-            }
-            // Si la petición esta cargando se muestra el indicador de cargando
-            NetworkResponse.Loading -> {
-                CircularProgressIndicator()
+                IconButton(onClick = {
+                    weatherViewModel.getData(ciudad)
+                    keyboardController?.hide()
+                }) {
+                    Icon(imageVector = Icons.Filled.Search, contentDescription = "Busca")
+                }
             }
 
-            // Si la petición ha sido exitosa se muestra el contenido
-            is NetworkResponse.Success -> {
-                DetallesTiempo(datos = result.data)
+            EstadoUIHandler(estadoUI, snackbarHostState) {
+                if (estadoUI is EstadoUI.Exito) {
+                    DetallesTiempo(datos = ((estadoUI as EstadoUI.Exito<WeatherModel>).datos))
+                }
+
             }
-
-            is NetworkResponse.Empty -> {}
-
-            null -> {}
         }
     }
+
 }
 
 // Contenido de la pantalla
@@ -144,7 +138,9 @@ fun DetallesTiempo(datos: WeatherModel) {
             )
             Spacer(modifier = Modifier.height(15.dp))
 
-            Card {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),

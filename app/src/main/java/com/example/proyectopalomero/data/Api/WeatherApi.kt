@@ -1,5 +1,6 @@
-package com.example.proyectopalomero.BackEnd.Api
+package com.example.proyectopalomero.data.Api
 
+import com.example.proyectopalomero.data.model.WeatherModel
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query

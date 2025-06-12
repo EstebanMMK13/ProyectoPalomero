@@ -1,9 +1,6 @@
 package com.example.proyectopalomero.ui.theme.screens.Feed
 
-import android.R.attr.id
 import androidx.compose.runtime.mutableStateMapOf
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -11,116 +8,154 @@ import com.example.proyectopalomero.data.model.PublicacionFire
 import com.example.proyectopalomero.data.model.UsuarioFire
 import com.example.proyectopalomero.data.repository.PublicacionesRepository
 import com.example.proyectopalomero.data.repository.UsuarioRepository
-import com.example.proyectopalomero.ui.theme.screens.LoginYRegister.LoginViewModel
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.firestore
-import kotlinx.coroutines.Dispatchers
+import com.example.proyectopalomero.data.utils.EstadoUI
+import com.example.proyectopalomero.data.utils.Resultado
+import com.example.proyectopalomero.data.utils.errorGeneral
+import com.example.proyectopalomero.data.utils.errorSnackBar
+import com.example.proyectopalomero.ui.theme.Components.Publicacion.PublicacionActions
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
 
 class FeedViewModel(
     private val publicacionesRepository: PublicacionesRepository,
     private val usuarioRepository: UsuarioRepository
-) : ViewModel() {
+) : ViewModel(), PublicacionActions {
 
-    private val _isLoading = MutableStateFlow(true)
-    val isLoading: StateFlow<Boolean> = _isLoading
-
-    private val _success = MutableLiveData<Boolean>()
-    val success: LiveData<Boolean> = _success
-
-    private val _mensajeError = MutableLiveData<String?>()
-    val mensajeError: LiveData<String?> = _mensajeError
+    private val _estadoUI = MutableStateFlow<EstadoUI<Boolean>>(EstadoUI.Vacio)
+    val estadoUI: StateFlow<EstadoUI<Boolean>> = _estadoUI.asStateFlow()
 
     private val _usuariosMap = mutableStateMapOf<String, UsuarioFire?>()
     val usuariosMap: Map<String, UsuarioFire?> get() = _usuariosMap
 
     private var publicacionesJob: Job? = null
 
-    // Nos suscribimos directamente al flujo expuesto por el repositorio
     val publicaciones = publicacionesRepository.publicacionesFlow
 
-    init {
-        publicacionesRepository.iniciarEscuchaPublicacionesEnTiempoReal()
-        obtenerPublicaciones()
-    }
+    init { publicacionesRepository.iniciarEscuchaPublicacionesEnTiempoReal() }
 
     fun obtenerPublicaciones() {
         publicacionesJob?.cancel()
-
+        _estadoUI.value = EstadoUI.Cargando
         publicacionesJob = viewModelScope.launch {
-            _isLoading.value = true
-
-            publicaciones
-                .catch { e ->
-                    _mensajeError.value = e.message
-                    _success.value = false
-                    _isLoading.value = false
-                }
-                .collect { publicacionesList ->
-                    cargarUsuarios(publicacionesList.mapNotNull { it.usuario }.distinct())
-                    _success.value = true
-                    _isLoading.value = false
-                }
+            publicaciones.collect { publicacionesList ->
+                val userIds = publicacionesList.mapNotNull { it.usuario }.distinct()
+                cargarUsuarios(userIds)
+            }
         }
     }
 
     private fun cargarUsuarios(userIds: List<String>) {
         viewModelScope.launch {
-            try {
-                val usuarios = userIds.associateWith { id ->
-                    usuarioRepository.obtenerUsuarioPorId(id)
+            val resultado = obtenerUsuarios(userIds)
+            when (resultado) {
+                is Resultado.Exito -> {
+                    _usuariosMap.clear()
+                    _usuariosMap.putAll(resultado.datos)
+                    _estadoUI.value = EstadoUI.Exito(true)
                 }
-                _usuariosMap.clear()
-                _usuariosMap.putAll(usuarios)
-            } catch (e: Exception) {
-                // Manejo de error opcional
+                is Resultado.Error -> {
+                    _estadoUI.value = EstadoUI.Error("Error al cargar usuarios: ${resultado.mensaje}", errorGeneral)
+                }
             }
         }
     }
 
-    suspend fun obtenerUsuarioActual(): UsuarioFire {
-        return usuarioRepository.obtenerUsuarioActual()
+    private suspend fun obtenerUsuarios(userIds: List<String>): Resultado<Map<String, UsuarioFire?>> = coroutineScope {
+        try {
+            val deferredUsuarios = userIds.map { id ->
+                async {
+                    val resultado = usuarioRepository.obtenerUsuarioPorId(id)
+                    id to resultado
+                }
+            }
+            val resultados = deferredUsuarios.awaitAll()
+            val usuariosMap = mutableMapOf<String, UsuarioFire?>()
+
+            for ((id, resultado) in resultados) {
+                when (resultado) {
+                    is Resultado.Exito -> usuariosMap[id] = resultado.datos
+                    is Resultado.Error -> { usuariosMap[id] = null }
+                }
+            }
+            Resultado.Exito(usuariosMap)
+        } catch (e: Exception) {
+            Resultado.Error("Error cargando usuarios", e)
+        }
     }
 
-    fun leGustaAlUsuario(publicacion: PublicacionFire, idUsuario: String): Boolean {
+    suspend fun obtenerUsuarioActual(): UsuarioFire? {
+        val resultado = usuarioRepository.obtenerUsuarioActual()
+
+        when (resultado) {
+            is Resultado.Exito -> {
+                _estadoUI.value = EstadoUI.Exito(true)
+                return resultado.datos
+            }
+            is Resultado.Error -> {
+                _estadoUI.value = EstadoUI.Error("Error al obtener usuario actual: ${resultado.mensaje}", errorSnackBar)
+                return null
+            }
+        }
+    }
+
+
+    override fun leGustaAlUsuario(publicacion: PublicacionFire, idUsuario: String): Boolean {
         return publicacion.listaMeGustas?.contains(idUsuario) == true
     }
 
-    fun alternarMeGusta(publicacion: PublicacionFire, idUsuario: String) {
-        val leGusta = publicacion.listaMeGustas?.contains(idUsuario) ?: false
-        if (leGusta) {
-            publicacion.listaMeGustas?.remove(idUsuario)
-            publicacionesRepository.quitarMeGustaPublicacion(publicacion.id!!, idUsuario)
-        } else {
-            publicacion.listaMeGustas?.add(idUsuario)
-            publicacionesRepository.darMeGustaPublicacion(publicacion.id!!, idUsuario)
-        }
-    }
-
-    fun agregarPublicacion(publicacion: PublicacionFire) {
+    override fun alternarMeGusta(publicacion: PublicacionFire, idUsuario: String) {
         viewModelScope.launch {
-            val id = publicacionesRepository.agregarPublicacion(publicacion)
-            publicacion.id = id
+            val leGusta = publicacion.listaMeGustas?.contains(idUsuario) ?: false
+
+            if (leGusta) {
+                when (val resultado =  publicacionesRepository.quitarMeGustaPublicacion(publicacion.id!!, idUsuario)){
+
+                    is Resultado.Exito -> {
+                        publicacion.listaMeGustas?.remove(idUsuario)
+                        _estadoUI.value = EstadoUI.Exito(true)
+                    }
+                    is Resultado.Error -> {
+                        _estadoUI.value = EstadoUI.Error("Error al quitar me gusta: ${resultado.mensaje}",errorSnackBar)
+                    }
+                }
+            } else {
+                when(val resultado = publicacionesRepository.darMeGustaPublicacion(publicacion.id!!, idUsuario)){
+
+                    is Resultado.Exito -> {
+                        publicacion.listaMeGustas?.add(idUsuario)
+                        _estadoUI.value = EstadoUI.Exito(true)
+                    }
+                    is Resultado.Error -> {
+                        _estadoUI.value = EstadoUI.Error("Error al dar me gusta: ${resultado.mensaje}", errorSnackBar)
+                    }
+                }
+            }
         }
     }
 
-    suspend fun eliminarPublicacion(idPublicacion: String) {
-        publicacionesRepository.eliminarPublicacion(idPublicacion)
+    override fun eliminarPublicacion(idPublicacion: String) {
+        viewModelScope.launch {
+            when (val resultado = publicacionesRepository.eliminarPublicacion(idPublicacion)){
+                is Resultado.Exito -> {_estadoUI.value = EstadoUI.Exito(true)}
+                is Resultado.Error -> { _estadoUI.value = EstadoUI.Error("Error al eliminar publicacion: ${resultado.mensaje}",errorSnackBar) }
+            }
+        }
     }
 
     fun limpiarDatos() {
         publicacionesJob?.cancel()
         _usuariosMap.clear()
-        _success.value = false
-        _mensajeError.value = null
+        _estadoUI.value = EstadoUI.Vacio
+    }
+
+    fun limpiarEstado(){
+        _estadoUI.value = EstadoUI.Vacio
     }
 
     fun recargarPublicaciones() {
@@ -130,7 +165,6 @@ class FeedViewModel(
     }
 
 }
-
 
 class FeedViewModelFactory(
     private val publicacionesRepository: PublicacionesRepository,

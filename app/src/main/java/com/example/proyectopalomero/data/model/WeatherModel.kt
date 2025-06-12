@@ -1,4 +1,4 @@
-package com.example.proyectopalomero.BackEnd.Api
+package com.example.proyectopalomero.data.model
 
 //Llave para la API
 object Constant { val apiKey = "b329f8f6772e47418e102911242012"}

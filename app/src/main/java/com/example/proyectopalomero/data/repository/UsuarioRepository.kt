@@ -4,6 +4,7 @@ import android.util.Patterns
 import com.example.proyectopalomero.data.dao.UsuarioDao
 import com.example.proyectopalomero.data.model.UsuarioDto
 import com.example.proyectopalomero.data.model.UsuarioFire
+import com.example.proyectopalomero.data.utils.Resultado
 
 
 class UsuarioRepository(private val usuarioDao: UsuarioDao) {
@@ -21,19 +22,20 @@ class UsuarioRepository(private val usuarioDao: UsuarioDao) {
         "https://i.postimg.cc/Jh0RLWnL/avatar-Paloma-Verde-Osucro.jpg",
         "https://i.postimg.cc/N0nBGP9r/avatar-Paloma-Verde.jpg",
         "https://i.postimg.cc/4xNg6Tp9/avatar-Paloma-Principal.jpg",
-        "https://i.postimg.cc/rwnLgY9Y/avatar-Paloma-Secundario.jpg"
+        "https://i.postimg.cc/rwnLgY9Y/avatar-Paloma-Secundario.jpg",
     )
 
+    private var fotoAdmin = "https://i.postimg.cc/tT5BnKBg/avatar-Paloma-Admin.jpg"
 
     fun getCurrentUser(): Boolean {
         return usuarioDao.getCurrentUser() != null
     }
 
-    suspend fun comprobarUsuarioExiste(): Boolean {
+    suspend fun comprobarUsuarioExiste(): Resultado<Boolean> {
         return usuarioDao.comprobarUsuarioExiste()
     }
 
-    suspend fun login(email: String, password: String): Boolean {
+    suspend fun login(email: String, password: String): Resultado<Boolean> {
         return usuarioDao.login(email, password)
     }
 
@@ -45,30 +47,39 @@ class UsuarioRepository(private val usuarioDao: UsuarioDao) {
         return nickname.startsWith("@")
     }
 
-    suspend fun obtenerUsuarioActual(): UsuarioFire {
+    suspend fun obtenerUsuarios(): Resultado<List<UsuarioFire>> {
+        return usuarioDao.obtenerUsuarios()
+    }
+
+    suspend fun obtenerUsuarioActual(): Resultado<UsuarioFire> {
         return usuarioDao.obtenerUsuarioActual()
     }
 
-    suspend fun obtenerUsuarioPorId(id: String): UsuarioFire? {
+    suspend fun obtenerUsuarioPorId(id: String): Resultado<UsuarioFire?> {
         return usuarioDao.obtenerUsuarioPorId(id)
+    }
+
+    suspend fun obtenerUsuarioPorNickname(nickname: String): Resultado<UsuarioFire?> {
+        return usuarioDao.obtenerUsuarioPorNickname(nickname)
     }
 
     fun comprobarCorreoValido(correo: String): Boolean {
         return Patterns.EMAIL_ADDRESS.matcher(correo).matches()
     }
 
-    suspend fun verificarNicknameExistente(nickname: String): Boolean {
+    suspend fun verificarNicknameExistente(nickname: String): Resultado<Boolean> {
         return usuarioDao.verificarNicknameExistente(nickname)
     }
 
-    suspend fun registrarUsuario(usuario: UsuarioFire, password: String): Boolean {
-        usuario.fotoPerfil = listaAvatares.random()
+    suspend fun registrarUsuario(usuario: UsuarioFire, password: String): Resultado<Boolean> {
+
         var usuarioDto = UsuarioDto(
             nombre = usuario.nombre,
             nickname = usuario.nickname,
             correo = usuario.correo,
-            fotoPerfil = usuario.fotoPerfil
+            fotoPerfil = listaAvatares.random()
         )
+
         return usuarioDao.registrarUsuario(usuarioDto, password)
     }
 
@@ -82,7 +93,7 @@ class UsuarioRepository(private val usuarioDao: UsuarioDao) {
         }
     }
 
-    suspend fun actualizarUsuario(idUsuario: String, usuario: UsuarioFire) {
+    suspend fun actualizarUsuario(idUsuario: String, usuario: UsuarioFire) : Resultado<Unit>{
 
         val campos = mapOf(
             "nombre" to usuario.nombre,
@@ -90,9 +101,9 @@ class UsuarioRepository(private val usuarioDao: UsuarioDao) {
             "correo" to usuario.correo,
             "fotoPerfil" to usuario.fotoPerfil
         )
-        // Filtramos para quedarnos solo con campos que NO sean null
+
         val nuevoUsuario = campos.filterValues { it != null }
-        usuarioDao.actualizarUsuario(idUsuario, nuevoUsuario)
+        return usuarioDao.actualizarUsuario(idUsuario, nuevoUsuario)
     }
 
     fun listaDeAvatares(): List<String> {
